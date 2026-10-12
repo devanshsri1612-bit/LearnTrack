@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/db.js";
 import { env } from "../src/config/env.js";
+import { evaluateAllStudents } from "../src/services/rewardRules.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,9 @@ export async function seedDatabase() {
   const c104Json = JSON.parse(fs.readFileSync(c104Path, "utf-8"));
 
   // Clean existing tables in dependency order
+  await prisma.redemption.deleteMany();
+  await prisma.rewardItem.deleteMany();
+  await prisma.rewardLedgerEntry.deleteMany();
   await prisma.sessionFeedback.deleteMany();
   await prisma.tutoringSession.deleteMany();
   await prisma.tutorAvailability.deleteMany();
@@ -268,6 +272,45 @@ export async function seedDatabase() {
         },
       });
     }
+  }
+
+  // Synthetic Student S-108 (demonstrating COMEBACK rule: 6 weeks attendance recovery)
+  await prisma.student.create({
+    data: {
+      id: "S-108",
+      studentCode: "S-108",
+      userId: null,
+      name: "Kabir Sen",
+      email: "kabir.sen@learntrack.edu",
+      cohort: "CS-2024-A",
+      course: "Computer Science",
+      semester: 5,
+      mentorName: "Dr. Priya Nair",
+      hasRecentObservations: true,
+      synthetic: true,
+    },
+  });
+
+  const s108Attendance = [
+    { period: "Wk 1", timestamp: "2026-08-03T00:00:00.000Z", value: 60 },
+    { period: "Wk 2", timestamp: "2026-08-10T00:00:00.000Z", value: 62 },
+    { period: "Wk 3", timestamp: "2026-08-17T00:00:00.000Z", value: 58 },
+    { period: "Wk 4", timestamp: "2026-08-24T00:00:00.000Z", value: 78 },
+    { period: "Wk 5", timestamp: "2026-08-31T00:00:00.000Z", value: 82 },
+    { period: "Wk 6", timestamp: "2026-09-07T00:00:00.000Z", value: 80 },
+  ];
+  for (const pt of s108Attendance) {
+    await prisma.academicObservation.create({
+      data: {
+        studentId: "S-108",
+        subject: "Data Structures & Algorithms",
+        type: "ATTENDANCE",
+        period: pt.period,
+        value: pt.value,
+        observedAt: new Date(pt.timestamp),
+        source: "LMS",
+      },
+    });
   }
 
   // History events
@@ -983,6 +1026,70 @@ export async function seedDatabase() {
   for (const n of notificationsSeed) {
     await prisma.notification.create({ data: n });
   }
+
+  // 10. Seed Rewards Catalog & Evaluate Initial Rewards
+  const rewardCatalogSeed = [
+    {
+      id: "REW-PRINT",
+      name: "Print Credits (50 Pages)",
+      description: "Campus library printing allowance for coursework and lab submissions.",
+      cost: 20,
+      stock: 100,
+      isDraw: false,
+      simulated: true,
+    },
+    {
+      id: "REW-CANTEEN",
+      name: "Campus Canteen Meal Coupon",
+      description: "Subsidized healthy meal voucher for the student cafeteria.",
+      cost: 40,
+      stock: 50,
+      isDraw: false,
+      simulated: true,
+    },
+    {
+      id: "REW-INTERVIEW",
+      name: "Mock Technical Interview Session",
+      description: "1-on-1 mock interview with senior faculty or industry alumni.",
+      cost: 60,
+      stock: 15,
+      isDraw: false,
+      simulated: true,
+    },
+    {
+      id: "REW-RESUME",
+      name: "Career Center Resume Review",
+      description: "Comprehensive portfolio and CV feedback from placement mentors.",
+      cost: 50,
+      stock: 20,
+      isDraw: false,
+      simulated: true,
+    },
+    {
+      id: "REW-LABPASS",
+      name: "Extended Lab & Library Pass",
+      description: "Extended evening and weekend workstation access for personal projects.",
+      cost: 30,
+      stock: 40,
+      isDraw: false,
+      simulated: true,
+    },
+    {
+      id: "REW-DRAW-AI",
+      name: "Lucky Draw: 1-Month AI Learning Tool Access (SIMULATED)",
+      description: "Single draw entry for a one-month subscription to curated AI learning assistants (SIMULATED).",
+      cost: 15,
+      stock: 500,
+      isDraw: true,
+      simulated: true,
+    },
+  ];
+
+  for (const item of rewardCatalogSeed) {
+    await prisma.rewardItem.create({ data: item });
+  }
+
+  await evaluateAllStudents();
 }
 
 // Run directly when executed via `tsx prisma/seed.ts`

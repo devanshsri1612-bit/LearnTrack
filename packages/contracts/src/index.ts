@@ -828,3 +828,113 @@ export const PatchConsentRequestSchema = z.object({
 });
 export type PatchConsentRequest = z.infer<typeof PatchConsentRequestSchema>;
 
+// ==== 12. REWARDS & LEARNCOINS ====
+export const RewardSourceTypeSchema = z.enum([
+  "COMEBACK",
+  "CONSISTENCY",
+  "SUPPORT_SESSION",
+  "SUPPORT_SESSION_TUTOR",
+]);
+export type RewardSourceType = z.infer<typeof RewardSourceTypeSchema>;
+
+export const RewardLedgerEntrySchema = z.object({
+  id: z.string(),
+  studentId: z.string(),
+  sourceType: RewardSourceTypeSchema,
+  sourceId: z.string(),
+  points: z.number().int(),
+  reason: z.string(),
+  createdAt: z.string(),
+  activityWeek: z.string().optional(),
+});
+export type RewardLedgerEntry = z.infer<typeof RewardLedgerEntrySchema>;
+
+export const RewardItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  cost: z.number().int().positive(),
+  stock: z.number().int().min(0),
+  isDraw: z.boolean().default(false),
+  simulated: z.boolean().default(true),
+  entered: z.boolean().optional(),
+});
+export type RewardItem = z.infer<typeof RewardItemSchema>;
+
+export const RedemptionStatusSchema = z.enum([
+  "PENDING",
+  "FULFILLED",
+  "CANCELLED",
+]);
+export type RedemptionStatus = z.infer<typeof RedemptionStatusSchema>;
+
+export const RedemptionSchema = z.object({
+  id: z.string(),
+  studentId: z.string(),
+  itemId: z.string(),
+  cost: z.number().int().positive(),
+  status: RedemptionStatusSchema,
+  createdAt: z.string(),
+  item: RewardItemSchema.optional(),
+});
+export type Redemption = z.infer<typeof RedemptionSchema>;
+
+export const RewardProgressSchema = z.object({
+  nextRewardName: z.string().nullable(),
+  nextRewardCost: z.number().int().nullable(),
+  pointsNeeded: z.number().int().min(0),
+  percent: z.number().min(0).max(100),
+});
+export type RewardProgress = z.infer<typeof RewardProgressSchema>;
+
+export const RewardsMeResponseSchema = z.object({
+  studentId: z.string(),
+  balance: z.number().int().min(0),
+  ledger: z.array(RewardLedgerEntrySchema),
+  catalog: z.array(RewardItemSchema),
+  progress: RewardProgressSchema,
+  synthetic: z.boolean().optional(),
+});
+export type RewardsMeResponse = z.infer<typeof RewardsMeResponseSchema>;
+
+export const RedeemRequestSchema = z.object({
+  itemId: z.string().min(1, "Item ID is required"),
+});
+export type RedeemRequest = z.infer<typeof RedeemRequestSchema>;
+
+export const PatchRedemptionRequestSchema = z.object({
+  status: z.enum(["FULFILLED", "CANCELLED"]),
+});
+export type PatchRedemptionRequest = z.infer<typeof PatchRedemptionRequestSchema>;
+
+export const CohortRewardSummarySchema = z.object({
+  cohort: z.string(),
+  studentCount: z.number().int(),
+  pointsIssued: z.number().int().nullable(),
+  redemptionsCount: z.number().int().nullable(),
+  insufficientData: z.boolean(),
+  note: z.string().optional(),
+});
+export type CohortRewardSummary = z.infer<typeof CohortRewardSummarySchema>;
+
+export const RewardsSummaryResponseSchema = z.object({
+  totalPointsIssued: z.number().int(),
+  totalPointsRedeemed: z.number().int(),
+  totalRedemptions: z.number().int(),
+  fulfilledRedemptions: z.number().int(),
+  estimatedCost: z.number().int(),
+  estimatedCostUnit: z.literal("POINTS"),
+  costExplanation: z.string(),
+  cohorts: z.array(CohortRewardSummarySchema),
+  synthetic: z.boolean().optional(),
+});
+export type RewardsSummaryResponse = z.infer<typeof RewardsSummaryResponseSchema>;
+
+export const EvaluateRewardsResponseSchema = z.object({
+  evaluatedStudents: z.number().int(),
+  newEntriesCount: z.number().int(),
+  synthetic: z.boolean().optional(),
+});
+export type EvaluateRewardsResponse = z.infer<typeof EvaluateRewardsResponseSchema>;
+
+

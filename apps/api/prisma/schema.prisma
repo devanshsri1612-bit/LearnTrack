@@ -61,6 +61,8 @@ model Student {
   checkIns         StudentCheckIn[]
   consents         ConsentRecord[]
   tutoringSessions TutoringSession[]
+  rewardEntries    RewardLedgerEntry[]
+  redemptions      Redemption[]
 
   @@index([cohort])
 }
@@ -359,5 +361,48 @@ model PastCaseOutcome {
   createdAt        DateTime @default(now())
 
   @@index([interventionType, similarityKey])
+}
+
+model RewardLedgerEntry {
+  id           String   @id @default(cuid())
+  studentId    String
+  sourceType   String   // COMEBACK | CONSISTENCY | SUPPORT_SESSION | SUPPORT_SESSION_TUTOR
+  sourceId     String
+  points       Int
+  reason       String
+  activityWeek String?
+  createdAt    DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, sourceType, sourceId])
+  @@index([studentId])
+}
+
+model RewardItem {
+  id          String   @id
+  name        String
+  description String
+  cost        Int
+  stock       Int
+  isDraw      Boolean  @default(false)
+  simulated   Boolean  @default(true)
+
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id        String   @id @default(cuid())
+  studentId String
+  itemId    String
+  cost      Int
+  status    String   @default("PENDING") // PENDING | FULFILLED | CANCELLED
+  createdAt DateTime @default(now())
+
+  student Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  item    RewardItem @relation(fields: [itemId], references: [id])
+
+  @@index([studentId])
+  @@index([status])
 }
 

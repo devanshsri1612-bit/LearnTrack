@@ -26,7 +26,11 @@ import {
   StudentSupportCaseViewSchema,
   TutorProfileSchema,
   TutoringSessionSchema,
-  UserSchema
+  UserSchema,
+  RewardsMeResponseSchema,
+  RedemptionSchema,
+  RewardsSummaryResponseSchema,
+  EvaluateRewardsResponseSchema
 } from "@learntrack/contracts";
 
 const app = createApp();
@@ -38,6 +42,11 @@ async function loginAs(email: string, password = "demo-password") {
   const parsed = UserSchema.safeParse(res.body);
   expect(parsed.success).toBe(true);
   return { agent, user: res.body };
+}
+
+async function getCsrfToken(agent: ReturnType<typeof request.agent>) {
+  const res = await agent.get("/api/auth/csrf");
+  return res.body.csrfToken as string;
 }
 
 describe("LearnTrack Backend API Integration Tests", () => {
@@ -649,5 +658,392 @@ describe("LearnTrack Backend API Integration Tests", () => {
     expect(mappedInsufficient.needsAttention).toBe(false);
     expect(mappedInsufficient.score).toBe(0);
   });
+
+  it("16. LearnCoins: Idempotent evaluation and weekly cap by activity week", async () => {
+    const { prisma } = await import("../src/db.js");
+    const { evaluateRewards } = await import("../src/services/rewardRules.js");
+
+    // S-104 starts with 20 points from Wk 1 consistency (92% >= 90%)
+    const entriesInitial = await prisma.rewardLedgerEntry.findMany({
+      where: { studentId: "S-104" },
+    });
+    expect(entriesInitial.length).toBe(1);
+    expect(entriesInitial[0].points).toBe(20);
+    expect(entriesInitial[0].sourceType).toBe("CONSISTENCY");
+
+    // Idempotent: re-running evaluateRewards awards 0 new entries
+    const newCount = await evaluateRewards("S-104");
+    expect(newCount).toBe(0);
+    const entriesAfter = await prisma.rewardLedgerEntry.findMany({
+      where: { studentId: "S-104" },
+    });
+    expect(entriesAfter.length).toBe(1);
+
+    // Weekly cap test: Add two more consistency observations in the same activity week (week of 2026-08-10)
+    // S-104 already has 20 points in that week. Next award gives 20 (total 40), third gives 20 (total 60 cap).
+    // A fourth award in the same week must yield 0 points because 60-point cap is reached.
+    await prisma.academicObservation.create({
+      data: {
+        studentId: "S-104",
+        subject: "Operating Systems",
+        type: "ATTENDANCE",
+        period: "Wk 1-LabA",
+        value: 95,
+        observedAt: new Date("2026-08-11T00:00:00.000Z"),
+        source: "LMS",
+      },
+    });
+    await prisma.academicObservation.create({
+      data: {
+        studentId: "S-104",
+        subject: "Operating Systems",
+        type: "ATTENDANCE",
+        period: "Wk 1-LabB",
+        value: 94,
+        observedAt: new Date("2026-08-12T00:00:00.000Z"),
+        source: "LMS",
+      },
+    });
+    await prisma.academicObservation.create({
+      data: {
+        studentId: "S-104",
+        subject: "Operating Systems",
+        type: "ATTENDANCE",
+        period: "Wk 1-LabC",
+        value: 96,
+        observedAt: new Date("2026-08-13T00:00:00.000Z"),
+        source: "LMS",
+      },
+    });
+
+    await evaluateRewards("S-104");
+
+    const week1Entries = await prisma.rewardLedgerEntry.findMany({
+      where: { studentId: "S-104", activityWeek: "2026-08-10" },
+    });
+    const totalWeek1Points = week1Entries.reduce((sum, e) => sum + e.points, 0);
+    expect(totalWeek1Points).toBe(60); // Strictly capped at 60 points!
+  });
+
+  it("17. LearnCoins: Insufficient balance and out of stock rejections", async () => {
+    const { prisma } = await import("../src/db.js");
+    const { agent } = await loginAs("student@learntrack.edu");
+    const csrfToken = await getCsrfToken(agent);
+
+    // Check S-104 current balance via /api/rewards/me
+    const meRes = await agent.get("/api/rewards/me");
+    expect(meRes.status).toBe(200);
+    expect(RewardsMeResponseSchema.safeParse(meRes.body).success).toBe(true);
+    const balance = meRes.body.balance;
+
+    // S-104 attempts to redeem an item costing more than balance (e.g. mock interview at cost 60)
+    // S-104 currently has 60 points from previous test. Let's create an expensive item costing 500
+    const expensiveItem = await prisma.rewardItem.create({
+      data: {
+        id: "REW-EXPENSIVE-TEST",
+        name: "Expensive Item",
+        description: "Costs more than any balance",
+        cost: 9999,
+        stock: 5,
+        isDraw: false,
+        simulated: true,
+      },
+    });
+
+    const overspendRes = await agent
+      .post("/api/rewards/redeem")
+      .set("X-CSRF-Token", csrfToken)
+      .send({ itemId: expensiveItem.id });
+    expect(overspendRes.status).toBe(400);
+    expect(overspendRes.body.error.code).toBe("INSUFFICIENT_BALANCE");
+
+    // Out of stock test: set an item's stock to 0
+    await prisma.rewardItem.update({
+      where: { id: "REW-PRINT" },
+      data: { stock: 0 },
+    });
+
+    const oosRes = await agent
+      .post("/api/rewards/redeem")
+      .set("X-CSRF-Token", csrfToken)
+      .send({ itemId: "REW-PRINT" });
+    expect(oosRes.status).toBe(400);
+    expect(oosRes.body.error.code).toBe("OUT_OF_STOCK");
+
+    // Restore stock
+    await prisma.rewardItem.update({
+      where: { id: "REW-PRINT" },
+      data: { stock: 100 },
+    });
+  });
+
+  it("18. LearnCoins: Privacy and role-based access control (RBAC)", async () => {
+    const { agent: studentAgent } = await loginAs("student@learntrack.edu");
+    const csrfToken = await getCsrfToken(studentAgent);
+
+    // Student calls /api/rewards/me?studentId=S-105: server ignores query param and returns own data (S-104)
+    const ownOnlyRes = await studentAgent.get("/api/rewards/me?studentId=S-105");
+    expect(ownOnlyRes.status).toBe(200);
+    expect(ownOnlyRes.body.studentId).toBe("S-104");
+
+    // Student cannot access summary
+    const forbiddenSummary = await studentAgent.get("/api/rewards/summary");
+    expect(forbiddenSummary.status).toBe(403);
+
+    // Staff (Mentor) cannot redeem catalog items
+    const { agent: mentorAgent } = await loginAs("mentor@learntrack.edu");
+    const mentorCsrf = await getCsrfToken(mentorAgent);
+    const mentorRedeem = await mentorAgent
+      .post("/api/rewards/redeem")
+      .set("X-CSRF-Token", mentorCsrf)
+      .send({ itemId: "REW-PRINT" });
+    expect(mentorRedeem.status).toBe(403);
+  });
+
+  it("19. LearnCoins: CSRF protection, lucky draw limit, and cancel-twice idempotent refund", async () => {
+    const { prisma } = await import("../src/db.js");
+    const { agent: studentAgent } = await loginAs("student@learntrack.edu");
+
+    // Mutating request without X-CSRF-Token header is rejected (403)
+    const noCsrfRes = await studentAgent
+      .post("/api/rewards/redeem")
+      .send({ itemId: "REW-DRAW-AI" });
+    expect(noCsrfRes.status).toBe(403);
+    expect(noCsrfRes.body.error.code).toBe("CSRF_INVALID");
+
+    // Mutating request with valid CSRF token succeeds
+    const csrfToken = await getCsrfToken(studentAgent);
+    const redeemDrawRes = await studentAgent
+      .post("/api/rewards/redeem")
+      .set("X-CSRF-Token", csrfToken)
+      .send({ itemId: "REW-DRAW-AI" });
+    expect(redeemDrawRes.status).toBe(201);
+    expect(RedemptionSchema.safeParse(redeemDrawRes.body).success).toBe(true);
+    const redemptionId = redeemDrawRes.body.id;
+
+    // Check /api/rewards/me reflects entered: true for the draw item
+    const meRes = await studentAgent.get("/api/rewards/me");
+    expect(meRes.status).toBe(200);
+    const drawItem = meRes.body.catalog.find((i: { id: string }) => i.id === "REW-DRAW-AI");
+    expect(drawItem.entered).toBe(true);
+
+    // Second draw entry is rejected
+    const secondDrawRes = await studentAgent
+      .post("/api/rewards/redeem")
+      .set("X-CSRF-Token", csrfToken)
+      .send({ itemId: "REW-DRAW-AI" });
+    expect(secondDrawRes.status).toBe(400);
+    expect(secondDrawRes.body.error.code).toBe("DRAW_ENTRY_LIMIT");
+
+    // Finance user cancels the redemption: stock increments by 1
+    const { agent: financeAgent } = await loginAs("finance@learntrack.edu");
+    const finCsrf = await getCsrfToken(financeAgent);
+
+    const initialItem = await prisma.rewardItem.findUnique({
+      where: { id: "REW-DRAW-AI" },
+    });
+    const initialStock = initialItem!.stock;
+
+    const cancelRes = await financeAgent
+      .patch(`/api/rewards/redemptions/${redemptionId}`)
+      .set("X-CSRF-Token", finCsrf)
+      .send({ status: "CANCELLED" });
+    expect(cancelRes.status).toBe(200);
+    expect(cancelRes.body.status).toBe("CANCELLED");
+
+    const itemAfterCancel = await prisma.rewardItem.findUnique({
+      where: { id: "REW-DRAW-AI" },
+    });
+    expect(itemAfterCancel!.stock).toBe(initialStock + 1);
+
+    // Repeating cancel must fail (status machine: PENDING -> CANCELLED only) and not refund stock twice
+    const doubleCancelRes = await financeAgent
+      .patch(`/api/rewards/redemptions/${redemptionId}`)
+      .set("X-CSRF-Token", finCsrf)
+      .send({ status: "CANCELLED" });
+    expect(doubleCancelRes.status).toBe(400);
+    expect(doubleCancelRes.body.error.code).toBe("INVALID_STATUS_TRANSITION");
+
+    const itemAfterDoubleCancel = await prisma.rewardItem.findUnique({
+      where: { id: "REW-DRAW-AI" },
+    });
+    expect(itemAfterDoubleCancel!.stock).toBe(initialStock + 1); // Not incremented again!
+  });
+
+  it("20. LearnCoins: Concurrent redemption (Promise.all) prevents negative balance", async () => {
+    const { prisma } = await import("../src/db.js");
+    const { agent } = await loginAs("student@learntrack.edu");
+    const csrfToken = await getCsrfToken(agent);
+
+    // Add exactly 40 points in a new week (2026-11-02)
+    await prisma.rewardLedgerEntry.create({
+      data: {
+        studentId: "S-104",
+        sourceType: "CONSISTENCY",
+        sourceId: "Wk-Concurrent-Test",
+        points: 40,
+        reason: "Concurrent test balance seed",
+        activityWeek: "2026-11-02",
+      },
+    });
+
+    const meBefore = await agent.get("/api/rewards/me");
+    const currentBal = meBefore.body.balance;
+    expect(currentBal).toBeGreaterThan(0);
+    const itemCost = Math.floor(currentBal * 0.7);
+
+    // Create a test item costing 70% of balance (so two requests cost 140% of balance)
+    await prisma.rewardItem.create({
+      data: {
+        id: "REW-CONCURRENT-ITEM",
+        name: "Concurrent Test Item",
+        description: "Test overdraw prevention item",
+        cost: itemCost,
+        stock: 10,
+        isDraw: false,
+        simulated: true,
+      },
+    });
+
+    // Student tries to redeem the item twice simultaneously
+    // Exactly one must succeed and one must fail with INSUFFICIENT_BALANCE
+    const [res1, res2] = await Promise.all([
+      agent
+        .post("/api/rewards/redeem")
+        .set("X-CSRF-Token", csrfToken)
+        .send({ itemId: "REW-CONCURRENT-ITEM" }),
+      agent
+        .post("/api/rewards/redeem")
+        .set("X-CSRF-Token", csrfToken)
+        .send({ itemId: "REW-CONCURRENT-ITEM" }),
+    ]);
+
+    const statuses = [res1.status, res2.status];
+    expect(statuses).toContain(201);
+    expect(statuses).toContain(400);
+
+    const failRes = res1.status === 400 ? res1 : res2;
+    expect(failRes.body.error.code).toBe("INSUFFICIENT_BALANCE");
+
+    // Check balance remains non-negative
+    const finalMe = await agent.get("/api/rewards/me");
+    expect(finalMe.body.balance).toBeGreaterThanOrEqual(0);
+  });
+
+  it("21. LearnCoins: Comeback rule, future session guard, and tutoring session completion rewards", async () => {
+    const { prisma } = await import("../src/db.js");
+    const { evaluateRewards } = await import("../src/services/rewardRules.js");
+
+    // S-104 only has 5 weeks of attendance (insufficient history for 6-week COMEBACK rule)
+    const s104Comebacks = await prisma.rewardLedgerEntry.findMany({
+      where: { studentId: "S-104", sourceType: "COMEBACK" },
+    });
+    expect(s104Comebacks.length).toBe(0);
+
+    // S-108 was seeded with 6 weeks of attendance (60, 62, 58 -> 78, 82, 80: delta = +20%)
+    const s108Comebacks = await prisma.rewardLedgerEntry.findMany({
+      where: { studentId: "S-108", sourceType: "COMEBACK" },
+    });
+    expect(s108Comebacks.length).toBe(1);
+    expect(s108Comebacks[0].points).toBe(30);
+    expect(s108Comebacks[0].sourceId).toBe("Wk 6");
+
+    // Overlapping window does not award again
+    await evaluateRewards("S-108");
+    const s108ComebacksAfter = await prisma.rewardLedgerEntry.findMany({
+      where: { studentId: "S-108", sourceType: "COMEBACK" },
+    });
+    expect(s108ComebacksAfter.length).toBe(1);
+
+    // Future-dated session guard: a session ending in the future awards 0 points
+    await prisma.tutoringSession.create({
+      data: {
+        id: "SES-FUTURE-TEST",
+        tutorId: "T-201",
+        tutorName: "Divya Subramanian",
+        studentId: "S-104",
+        studentName: "Aarav Sharma",
+        subject: "Algorithms",
+        slotId: "SLOT-FUTURE",
+        startIso: "2099-01-01T10:00:00.000Z",
+        endIso: "2099-01-01T11:00:00.000Z",
+        status: "COMPLETED",
+        feedbackSubmitted: true,
+      },
+    });
+
+    await evaluateRewards("S-104");
+    const futureReward = await prisma.rewardLedgerEntry.findFirst({
+      where: { studentId: "S-104", sourceId: "SES-FUTURE-TEST" },
+    });
+    expect(futureReward).toBeNull(); // Earns nothing for future session!
+
+    // Past-dated completed session with feedback awards +15 to student and +20 to tutor (S-105)
+    await prisma.tutoringSession.create({
+      data: {
+        id: "SES-PAST-TEST",
+        tutorId: "T-201", // T-201 belongs to USER-TUTOR-1, which links to student S-105
+        tutorName: "Divya Subramanian",
+        studentId: "S-106",
+        studentName: "Rohan Deshmukh",
+        subject: "Operating Systems",
+        slotId: "SLOT-PAST",
+        startIso: "2026-09-01T10:00:00.000Z",
+        endIso: "2026-09-01T11:00:00.000Z",
+        status: "COMPLETED",
+        feedbackSubmitted: true,
+      },
+    });
+
+    await evaluateRewards("S-106");
+    await evaluateRewards("S-105");
+
+    const studentAward = await prisma.rewardLedgerEntry.findUnique({
+      where: {
+        studentId_sourceType_sourceId: {
+          studentId: "S-106",
+          sourceType: "SUPPORT_SESSION",
+          sourceId: "SES-PAST-TEST",
+        },
+      },
+    });
+    expect(studentAward).not.toBeNull();
+    expect(studentAward!.points).toBe(15);
+
+    const tutorAward = await prisma.rewardLedgerEntry.findUnique({
+      where: {
+        studentId_sourceType_sourceId: {
+          studentId: "S-105",
+          sourceType: "SUPPORT_SESSION_TUTOR",
+          sourceId: "SES-PAST-TEST",
+        },
+      },
+    });
+    expect(tutorAward).not.toBeNull();
+    expect(tutorAward!.points).toBe(20);
+  });
+
+  it("22. LearnCoins: Executive summary and cohort suppression under N=30", async () => {
+    const { agent: hodAgent } = await loginAs("hod@learntrack.edu");
+
+    const summaryRes = await hodAgent.get("/api/rewards/summary");
+    expect(summaryRes.status).toBe(200);
+    expect(RewardsSummaryResponseSchema.safeParse(summaryRes.body).success).toBe(true);
+
+    expect(summaryRes.body.totalPointsIssued).toBeGreaterThan(0);
+    expect(summaryRes.body.estimatedCostUnit).toBe("POINTS");
+    expect(summaryRes.body.cohorts.length).toBeGreaterThan(0);
+
+    // All seeded cohorts have N < 30 (CS-2024-A has 3, ECE-2024-B has 1, ME-2025-A has 1)
+    // Every cohort must have insufficientData: true and pointsIssued: null
+    for (const c of summaryRes.body.cohorts) {
+      expect(c.studentCount).toBeLessThan(30);
+      expect(c.insufficientData).toBe(true);
+      expect(c.pointsIssued).toBeNull();
+      expect(c.redemptionsCount).toBeNull();
+      expect(c.note).toContain("below privacy threshold");
+    }
+  });
 });
+
 
