@@ -1,0 +1,73 @@
+{
+  "studentId": "S-104",
+  "subject": "DSA",
+  "asOf": "2026-10-12T00:00:00Z",
+  "observations": [
+    {
+      "observedAt": "2026-08-03T00:00:00Z",
+      "attendanceAttended": 9,
+      "attendanceTotal": 10,
+      "assessmentScore": 78,
+      "assessmentMax": 100,
+      "assignmentsSubmitted": 3,
+      "assignmentsDue": 3,
+      "lmsActiveDays": 5,
+      "facultyAcademicConcern": false
+    },
+    {
+      "observedAt": "2026-08-10T00:00:00Z",
+      "attendanceAttended": 9,
+      "attendanceTotal": 10,
+      "assessmentScore": 73,
+      "assessmentMax": 100,
+      "assignmentsSubmitted": 3,
+      "assignmentsDue": 3,
+      "lmsActiveDays": 5,
+      "facultyAcademicConcern": false
+    },
+    {
+      "observedAt": "2026-08-17T00:00:00Z",
+      "attendanceAttended": 8,
+      "attendanceTotal": 10,
+      "assessmentScore": 68,
+      "assessmentMax": 100,
+      "assignmentsSubmitted": 2,
+      "assignmentsDue": 3,
+      "lmsActiveDays": 4,
+      "facultyAcademicConcern": false
+    },
+    {
+      "observedAt": "2026-08-24T00:00:00Z",
+      "attendanceAttended": 7,
+      "attendanceTotal": 10,
+      "assessmentScore": 62,
+      "assessmentMax": 100,
+      "assignmentsSubmitted": 2,
+      "assignmentsDue": 3,
+      "lmsActiveDays": 3,
+      "facultyAcademicConcern": true
+    },
+    {
+      "observedAt": "2026-08-31T00:00:00Z",
+      "attendanceAttended": 7,
+      "attendanceTotal": 10,
+      "assessmentScore": 58,
+      "assessmentMax": 100,
+      "assignmentsSubmitted": 2,
+      "assignmentsDue": 3,
+      "lmsActiveDays": 3,
+      "facultyAcademicConcern": true
+    },
+    {
+      "observedAt": "2026-09-07T00:00:00Z",
+      "attendanceAttended": 6,
+      "attendanceTotal": 10,
+      "assessmentScore": 54,
+      "assessmentMax": 100,
+      "assignmentsSubmitted": 1,
+      "assignmentsDue": 3,
+      "lmsActiveDays": 2,
+      "facultyAcademicConcern": true
+    }
+  ]
+}

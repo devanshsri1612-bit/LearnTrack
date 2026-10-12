@@ -1,0 +1,64 @@
+{
+  "selected_model": "logistic_regression",
+  "validation_threshold": 0.63,
+  "validation": {
+    "n": 225,
+    "positive_rate": 0.24,
+    "precision": 0.6065573770491803,
+    "recall": 0.6851851851851852,
+    "f1": 0.6434782608695652,
+    "roc_auc": 0.861598440545809,
+    "average_precision": 0.7489508624579738,
+    "confusion_matrix_labels_0_1": [
+      [
+        147,
+        24
+      ],
+      [
+        17,
+        37
+      ]
+    ],
+    "flag_fraction": 0.27111111111111114
+  },
+  "test": {
+    "n": 225,
+    "positive_rate": 0.24,
+    "precision": 0.509090909090909,
+    "recall": 0.5185185185185185,
+    "f1": 0.5137614678899083,
+    "roc_auc": 0.813948451375352,
+    "average_precision": 0.5964087472915977,
+    "confusion_matrix_labels_0_1": [
+      [
+        144,
+        27
+      ],
+      [
+        26,
+        28
+      ]
+    ],
+    "flag_fraction": 0.24444444444444444
+  },
+  "split_sizes": {
+    "train": 1050,
+    "validation": 225,
+    "test": 225
+  },
+  "student_split_overlap": false,
+  "warning": "Synthetic data only; metrics are not real-world validation."
+}
+
+Saved model: /mnt/data/ml-delivery/artifacts/model.joblib
+
+Spreadsheet runtime warmup failed during python startup
+Traceback (most recent call last):
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/patches/warm_spreadsheet_runtime_on_startup.py", line 26, in warm_spreadsheet_runtime_on_startup
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/spreadsheet_warmup.py", line 785, in warm_spreadsheet_runtime
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/spreadsheet_warmup.py", line 718, in _warm_feature_flows
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/spreadsheet_warmup.py", line 509, in _warm_drawing_and_image_flows
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/generated/interface/models.py", line 32861, in bring_to_front
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/rpc/remote.py", line 764, in __call__
+  File "/tmp/tmp.QlpUkOUI9D/artifact_tool_v2-2.8.66/artifact_tool/rpc/client.py", line 175, in call
+artifact_tool.rpc.client.RemoteError: Element ordering requires an owning element collection.

@@ -1,0 +1,33 @@
+{
+  "studentId": "S-104",
+  "subject": "DSA",
+  "assessmentStatus": "assessed",
+  "predictionTarget": "Future week-9 DSA assessment below 50.0/100, using weeks 1-8 observations",
+  "modelVersion": "synthetic-dsa-v1",
+  "modelScore": 0.6,
+  "decisionThreshold": 0.63,
+  "reviewSuggested": false,
+  "evidence": [
+    "Historical assessment-score trend: -4.9 percentage points per observed assessment.",
+    "Recent assessment mean: 60.5% across 4 available scores.",
+    "Recent attendance rate: 70.0%.",
+    "Attendance change between the latest two rolling windows: -5.0 percentage points.",
+    "Recent assignment completion: 58.3%.",
+    "3 structured academic concern flag(s) in the recent window."
+  ],
+  "suggestedNextStep": "Continue routine monitoring; this score is not a guarantee of future performance.",
+  "requiresHumanReview": true,
+  "dataQuality": {
+    "status": "available",
+    "reasons": [],
+    "observation_count": 6
+  },
+  "limitations": [
+    "Trained and evaluated only on fictional synthetic data.",
+    "Model scores are not validated real-world probabilities.",
+    "A review signal is not a diagnosis or final intervention decision.",
+    "Synthetic evaluation does not establish fairness or intervention effectiveness."
+  ],
+  "computedAt": "2026-10-11T18:30:26.224669+00:00",
+  "source": "synthetic-trained-model"
+}

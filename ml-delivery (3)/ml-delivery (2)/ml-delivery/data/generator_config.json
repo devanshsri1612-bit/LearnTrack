@@ -1,0 +1,19 @@
+{
+  "seed": 42,
+  "n_students": 1500,
+  "subject": "DSA",
+  "historical_weeks": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "future_outcome_week": 9,
+  "positive_label": "future assessment score < 50.0",
+  "threshold": 50.0,
+  "synthetic_only": true
+}

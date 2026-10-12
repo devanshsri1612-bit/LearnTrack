@@ -1,0 +1,34 @@
+{
+  "model_version": "synthetic-dsa-v1",
+  "prediction_target": "Future week-9 DSA assessment below 50.0/100, using weeks 1-8 observations",
+  "label_threshold_score": 50.0,
+  "decision_threshold": 0.63,
+  "selected_model": "logistic_regression",
+  "feature_columns": [
+    "recent_score_mean",
+    "score_trend",
+    "recent_attendance_rate",
+    "attendance_change",
+    "assignment_completion_rate",
+    "recent_lms_active_days_mean",
+    "available_observations",
+    "score_missing_rate",
+    "attendance_missing_rate",
+    "assignment_missing_rate",
+    "academic_concern_count"
+  ],
+  "training_seed": 42,
+  "training_students": 1050,
+  "validation_students": 225,
+  "test_students": 225,
+  "python_version": "3.13.16",
+  "pandas_version": "2.2.3",
+  "numpy_version": "2.1.3",
+  "scikit_learn_version": "1.6.1",
+  "limitations": [
+    "Trained and evaluated only on fictional synthetic data.",
+    "Model scores are not validated real-world probabilities.",
+    "A review signal is not a diagnosis or final intervention decision.",
+    "Synthetic evaluation does not establish fairness or intervention effectiveness."
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "note": "Generate authoritative fixtures by running scripts/generate_synthetic_data.py; CSV data is created by scripts/train.py."
+}

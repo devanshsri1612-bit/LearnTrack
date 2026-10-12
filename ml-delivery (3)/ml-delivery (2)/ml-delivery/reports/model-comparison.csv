@@ -1,0 +1,3 @@
+model,validation_average_precision
+dummy_most_frequent,0.24
+logistic_regression,0.7489508624579738

@@ -1,0 +1,3 @@
+{
+  "note": "Future outcome labels are generated separately in data/future_outcomes.csv and are never prediction inputs."
+}

@@ -1,0 +1,21 @@
+{
+  "id": "C-104",
+  "studentId": "S-104",
+  "studentName": "Aarav Sharma",
+  "cohort": "CS-2024-A",
+  "status": "NEEDS_REVIEW",
+  "deadlineStatus": "DUE_SOON",
+  "deadline": "2026-10-16T12:00:00.000Z",
+  "ownerId": "STAFF-MENTOR-1",
+  "ownerName": "Dr. Priya Nair",
+  "ownerRole": "MENTOR",
+  "recommendedIntervention": "PEER_TUTOR",
+  "selectedIntervention": null,
+  "overrideReason": null,
+  "plainLanguageReason": "Recent drop in Data Structures lab attendance and midterm score, alongside student request for peer tutoring.",
+  "version": 1,
+  "updatedAt": "2026-09-09T08:30:00.000Z",
+  "createdAt": "2026-09-08T16:00:00.000Z",
+  "synthetic": true
+}
+

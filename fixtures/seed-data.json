@@ -1,0 +1,210 @@
+{
+  "students": {
+    "S-104": {
+      "id": "S-104",
+      "name": "Aarav Sharma",
+      "email": "aarav.sharma@learntrack.edu",
+      "cohort": "CS-2024-A",
+      "department": "Computer Science",
+      "semester": 5,
+      "mentorName": "Dr. Priya Nair",
+      "activeCaseId": "C-104",
+      "hasRecentObservations": true,
+      "attendance": [
+        { "period": "Wk 1", "timestamp": "2026-08-10T00:00:00.000Z", "value": 92 },
+        { "period": "Wk 2", "timestamp": "2026-08-17T00:00:00.000Z", "value": 88 },
+        { "period": "Wk 3", "timestamp": "2026-08-24T00:00:00.000Z", "value": 74 },
+        { "period": "Wk 4", "timestamp": "2026-08-31T00:00:00.000Z", "value": 65 },
+        { "period": "Wk 5", "timestamp": "2026-09-07T00:00:00.000Z", "value": 60 }
+      ],
+      "marks": [
+        { "period": "Quiz 1", "timestamp": "2026-08-14T00:00:00.000Z", "value": 78 },
+        { "period": "Lab 1", "timestamp": "2026-08-22T00:00:00.000Z", "value": 70 },
+        { "period": "Midterm", "timestamp": "2026-09-02T00:00:00.000Z", "value": 54 }
+      ],
+      "participation": [
+        { "period": "Wk 1", "timestamp": "2026-08-10T00:00:00.000Z", "value": 80 },
+        { "period": "Wk 3", "timestamp": "2026-08-24T00:00:00.000Z", "value": 65 },
+        { "period": "Wk 5", "timestamp": "2026-09-07T00:00:00.000Z", "value": 50 }
+      ],
+      "fees": {
+        "status": "PENDING_INSTALLMENT",
+        "dueDate": "2026-10-25T00:00:00.000Z",
+        "note": "Second installment payment plan requested",
+        "trend": [
+          { "period": "Sem 3", "timestamp": "2025-10-01T00:00:00.000Z", "value": 100 },
+          { "period": "Sem 4", "timestamp": "2026-03-01T00:00:00.000Z", "value": 100 },
+          { "period": "Sem 5", "timestamp": "2026-09-01T00:00:00.000Z", "value": 50 }
+        ]
+      },
+      "skills": [
+        { "period": "Sem 3", "timestamp": "2025-11-15T00:00:00.000Z", "value": 72 },
+        { "period": "Sem 4", "timestamp": "2026-04-15T00:00:00.000Z", "value": 76 },
+        { "period": "Sem 5", "timestamp": "2026-09-10T00:00:00.000Z", "value": 68 }
+      ],
+      "facultyFeedback": [
+        {
+          "id": "FF-101",
+          "date": "2026-09-05T10:30:00.000Z",
+          "subject": "Data Structures & Algorithms",
+          "authorRole": "FACULTY",
+          "observation": "Missed two consecutive lab sessions; previously engaged during problem-solving discussions.",
+          "engagementRating": 3
+        },
+        {
+          "id": "FF-102",
+          "date": "2026-09-08T14:15:00.000Z",
+          "subject": "Operating Systems",
+          "authorRole": "FACULTY",
+          "observation": "Submitted midterm revision sheet partially completed; requested clarification on concurrency topics.",
+          "engagementRating": 3
+        }
+      ],
+      "counselling": {
+        "referralStatus": "NONE",
+        "lastUpdated": "2026-09-01T00:00:00.000Z",
+        "summaryNote": "No active counselling referral."
+      },
+      "studentContext": {
+        "lastCheckInAt": "2026-09-06T09:00:00.000Z",
+        "summary": "Commute schedule changed this month and balancing part-time family responsibilities; would welcome peer tutoring in Data Structures.",
+        "requestedSupport": "ACADEMIC_TUTORING"
+      },
+      "synthetic": true
+    },
+    "S-105": {
+      "id": "S-105",
+      "name": "Meera Krishnan",
+      "email": "meera.krishnan@learntrack.edu",
+      "cohort": "CS-2024-A",
+      "department": "Computer Science",
+      "semester": 5,
+      "mentorName": "Dr. Priya Nair",
+      "activeCaseId": "C-105",
+      "hasRecentObservations": true,
+      "attendance": [
+        { "period": "Wk 1", "timestamp": "2026-08-10T00:00:00.000Z", "value": 95 },
+        { "period": "Wk 3", "timestamp": "2026-08-24T00:00:00.000Z", "value": 90 },
+        { "period": "Wk 5", "timestamp": "2026-09-07T00:00:00.000Z", "value": 88 }
+      ],
+      "marks": [
+        { "period": "Quiz 1", "timestamp": "2026-08-14T00:00:00.000Z", "value": 84 },
+        { "period": "Midterm", "timestamp": "2026-09-02T00:00:00.000Z", "value": 79 }
+      ],
+      "participation": [
+        { "period": "Wk 1", "timestamp": "2026-08-10T00:00:00.000Z", "value": 85 },
+        { "period": "Wk 5", "timestamp": "2026-09-07T00:00:00.000Z", "value": 82 }
+      ],
+      "fees": {
+        "status": "FEE_SUPPORT_REQUESTED",
+        "dueDate": "2026-10-18T00:00:00.000Z",
+        "note": "Scholarship renewal documentation under review",
+        "trend": [
+          { "period": "Sem 4", "timestamp": "2026-03-01T00:00:00.000Z", "value": 100 },
+          { "period": "Sem 5", "timestamp": "2026-09-01T00:00:00.000Z", "value": 40 }
+        ]
+      },
+      "skills": [
+        { "period": "Sem 4", "timestamp": "2026-04-15T00:00:00.000Z", "value": 85 },
+        { "period": "Sem 5", "timestamp": "2026-09-10T00:00:00.000Z", "value": 86 }
+      ],
+      "facultyFeedback": [
+        {
+          "id": "FF-201",
+          "date": "2026-09-04T11:00:00.000Z",
+          "subject": "Database Systems",
+          "authorRole": "FACULTY",
+          "observation": "Consistent academic performance; inquired about textbook access in library.",
+          "engagementRating": 4
+        }
+      ],
+      "counselling": {
+        "restricted": true,
+        "reason": "Restricted by role or consent"
+      },
+      "studentContext": {
+        "restricted": true,
+        "reason": "Restricted by role or consent"
+      },
+      "synthetic": true
+    },
+    "S-106": {
+      "id": "S-106",
+      "name": "Rohan Deshmukh",
+      "email": "rohan.deshmukh@learntrack.edu",
+      "cohort": "ECE-2024-B",
+      "department": "Electronics & Communication",
+      "semester": 5,
+      "mentorName": "Prof. Vikram Rao",
+      "activeCaseId": "C-106",
+      "hasRecentObservations": true,
+      "attendance": [
+        { "period": "Wk 1", "timestamp": "2026-08-10T00:00:00.000Z", "value": 86 },
+        { "period": "Wk 3", "timestamp": "2026-08-24T00:00:00.000Z", "value": 72 },
+        { "period": "Wk 5", "timestamp": "2026-09-07T00:00:00.000Z", "value": 64 }
+      ],
+      "marks": [
+        { "period": "Quiz 1", "timestamp": "2026-08-14T00:00:00.000Z", "value": 75 },
+        { "period": "Midterm", "timestamp": "2026-09-02T00:00:00.000Z", "value": 61 }
+      ],
+      "participation": [
+        { "period": "Wk 1", "timestamp": "2026-08-10T00:00:00.000Z", "value": 78 },
+        { "period": "Wk 5", "timestamp": "2026-09-07T00:00:00.000Z", "value": 58 }
+      ],
+      "fees": {
+        "status": "PAID",
+        "dueDate": null,
+        "note": "Cleared for Semester 5",
+        "trend": [
+          { "period": "Sem 5", "timestamp": "2026-08-01T00:00:00.000Z", "value": 100 }
+        ]
+      },
+      "skills": [
+        { "period": "Sem 4", "timestamp": "2026-04-15T00:00:00.000Z", "value": 70 },
+        { "period": "Sem 5", "timestamp": "2026-09-10T00:00:00.000Z", "value": 68 }
+      ],
+      "facultyFeedback": [
+        {
+          "id": "FF-301",
+          "date": "2026-09-06T15:00:00.000Z",
+          "subject": "Signal Processing",
+          "authorRole": "FACULTY",
+          "observation": "Requested extension on lab report; mentioned feeling overwhelmed by project workload.",
+          "engagementRating": 3
+        }
+      ],
+      "counselling": {
+        "referralStatus": "REFERRED",
+        "lastUpdated": "2026-09-07T10:00:00.000Z",
+        "summaryNote": "Optional counselling referral shared following mentor conversation."
+      },
+      "studentContext": {
+        "lastCheckInAt": "2026-09-06T18:20:00.000Z",
+        "summary": "Managing high project load across three labs; requested mentor check-in.",
+        "requestedSupport": "MENTOR_CHECKIN"
+      },
+      "synthetic": true
+    },
+    "S-107": {
+      "id": "S-107",
+      "name": "Zoya Farooqi",
+      "email": "zoya.farooqi@learntrack.edu",
+      "cohort": "ME-2025-A",
+      "department": "Mechanical Engineering",
+      "semester": 3,
+      "mentorName": "Dr. Priya Nair",
+      "activeCaseId": null,
+      "hasRecentObservations": false,
+      "attendance": [],
+      "marks": [],
+      "participation": [],
+      "fees": null,
+      "skills": [],
+      "facultyFeedback": [],
+      "counselling": null,
+      "studentContext": null,
+      "synthetic": true
+    }
+  }
+}
+
