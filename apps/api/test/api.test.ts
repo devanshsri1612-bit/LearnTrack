@@ -1031,7 +1031,7 @@ describe("LearnTrack Backend API Integration Tests", () => {
     expect(RewardsSummaryResponseSchema.safeParse(summaryRes.body).success).toBe(true);
 
     expect(summaryRes.body.totalPointsIssued).toBeGreaterThan(0);
-    expect(summaryRes.body.estimatedCostUnit).toBe("POINTS");
+    expect(summaryRes.body.totalPointsRedeemed).toBeDefined();
     expect(summaryRes.body.cohorts.length).toBeGreaterThan(0);
 
     // All seeded cohorts have N < 30 (CS-2024-A has 3, ECE-2024-B has 1, ME-2025-A has 1)
@@ -1042,6 +1042,44 @@ describe("LearnTrack Backend API Integration Tests", () => {
       expect(c.pointsIssued).toBeNull();
       expect(c.redemptionsCount).toBeNull();
       expect(c.note).toContain("below privacy threshold");
+    }
+  });
+
+  it("23. LearnCoins: S-108 (Kabir) login and comeback award verification", async () => {
+    const { agent: kabirAgent, user: kabirUser } = await loginAs("kabir@learntrack.edu");
+    expect(kabirUser.email).toBe("kabir@learntrack.edu");
+    expect(kabirUser.roles).toEqual(["STUDENT"]);
+    expect(kabirUser.studentId).toBe("S-108");
+
+    const meRes = await kabirAgent.get("/api/rewards/me");
+    expect(meRes.status).toBe(200);
+    expect(meRes.body.studentId).toBe("S-108");
+    expect(meRes.body.balance).toBe(30);
+    expect(meRes.body.ledger.some((e: { sourceType: string }) => e.sourceType === "COMEBACK")).toBe(true);
+  });
+
+  it("24. LearnCoins: Redemptions queue contains only display fields and excludes ledger and attendance records", async () => {
+    const { agent: financeAgent } = await loginAs("finance@learntrack.edu");
+
+    const res = await financeAgent.get("/api/rewards/redemptions");
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
+
+    if (res.body.items.length > 0) {
+      const first = res.body.items[0];
+      expect(first).toHaveProperty("id");
+      expect(first).toHaveProperty("studentDisplayName");
+      expect(first).toHaveProperty("itemName");
+      expect(first).toHaveProperty("cost");
+      expect(first).toHaveProperty("status");
+      expect(first).toHaveProperty("createdAt");
+
+      // Verify no sensitive internal fields leaked
+      expect(first).not.toHaveProperty("studentId");
+      expect(first).not.toHaveProperty("ledger");
+      expect(first).not.toHaveProperty("attendance");
+      expect(first).not.toHaveProperty("academicObservations");
+      expect(first).not.toHaveProperty("riskAssessment");
     }
   });
 });

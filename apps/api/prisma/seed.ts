@@ -85,6 +85,12 @@ export async function seedDatabase() {
       name: "Divya Subramanian",
       roles: ["STUDENT", "PEER_TUTOR"],
     },
+    {
+      id: "USER-S-108",
+      email: "kabir@learntrack.edu",
+      name: "Kabir Sen",
+      roles: ["STUDENT"],
+    },
   ];
 
   for (const u of usersToCreate) {
@@ -279,9 +285,9 @@ export async function seedDatabase() {
     data: {
       id: "S-108",
       studentCode: "S-108",
-      userId: null,
+      userId: "USER-S-108",
       name: "Kabir Sen",
-      email: "kabir.sen@learntrack.edu",
+      email: "kabir@learntrack.edu",
       cohort: "CS-2024-A",
       course: "Computer Science",
       semester: 5,

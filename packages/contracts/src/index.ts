@@ -879,6 +879,22 @@ export const RedemptionSchema = z.object({
 });
 export type Redemption = z.infer<typeof RedemptionSchema>;
 
+export const RedemptionListItemSchema = z.object({
+  id: z.string(),
+  studentDisplayName: z.string(),
+  itemName: z.string(),
+  cost: z.number().int().positive(),
+  status: RedemptionStatusSchema,
+  createdAt: z.string(),
+});
+export type RedemptionListItem = z.infer<typeof RedemptionListItemSchema>;
+
+export const RedemptionsListResponseSchema = z.object({
+  items: z.array(RedemptionListItemSchema),
+  synthetic: z.boolean().optional(),
+});
+export type RedemptionsListResponse = z.infer<typeof RedemptionsListResponseSchema>;
+
 export const RewardProgressSchema = z.object({
   nextRewardName: z.string().nullable(),
   nextRewardCost: z.number().int().nullable(),
@@ -922,9 +938,6 @@ export const RewardsSummaryResponseSchema = z.object({
   totalPointsRedeemed: z.number().int(),
   totalRedemptions: z.number().int(),
   fulfilledRedemptions: z.number().int(),
-  estimatedCost: z.number().int(),
-  estimatedCostUnit: z.literal("POINTS"),
-  costExplanation: z.string(),
   cohorts: z.array(CohortRewardSummarySchema),
   synthetic: z.boolean().optional(),
 });

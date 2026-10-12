@@ -3100,6 +3100,28 @@ export function createApp() {
   );
 
   app.get(
+    "/api/rewards/redemptions",
+    requireRoles(["FINANCE", "ADMIN"]),
+    async (_req: Request, res: Response) => {
+      const redemptions = await prisma.redemption.findMany({
+        include: { item: true, student: true },
+        orderBy: { createdAt: "desc" },
+      });
+      res.json({
+        items: redemptions.map((r) => ({
+          id: r.id,
+          studentDisplayName: r.student.name,
+          itemName: r.item.name,
+          cost: r.cost,
+          status: r.status,
+          createdAt: r.createdAt.toISOString(),
+        })),
+        synthetic: true,
+      });
+    }
+  );
+
+  app.get(
     "/api/rewards/summary",
     requireRoles(["HOD", "ADMIN"]),
     async (_req: Request, res: Response) => {
@@ -3165,10 +3187,6 @@ export function createApp() {
         totalPointsRedeemed,
         totalRedemptions,
         fulfilledRedemptions,
-        estimatedCost: totalPointsRedeemed,
-        estimatedCostUnit: "POINTS",
-        costExplanation:
-          "Estimated platform cost expressed as total LearnCoins redeemed across non-cancelled redemptions (simulated).",
         cohorts: cohortSummaries,
         synthetic: true,
       });

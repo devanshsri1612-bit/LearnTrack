@@ -13,7 +13,7 @@ export const COMEBACK_MIN_INTERVAL_MS = 28 * 24 * 60 * 60 * 1000; // 4 weeks
 
 export const WEEKLY_POINT_CAP = 60;
 export const MAX_TUTOR_CREDITS_PER_WEEK = 3;
-export const MIN_REWARDS_GROUP_SIZE = 30; // K-Anonymity privacy threshold for cohort summary
+export const MIN_REWARDS_GROUP_SIZE = 30; // Minimum group size (n >= 30) privacy threshold for cohort summary
 
 export function getActivityWeekKey(d: Date): string {
   const date = new Date(d);
@@ -193,7 +193,6 @@ export async function evaluateRewards(studentId: string): Promise<number> {
       for (const s of tutorSessions) {
         // Reject tutor == student
         if (s.studentId === studentId) {
-          console.log(`[rewards] Rejecting session ${s.id}: tutor equals student`);
           continue;
         }
 
@@ -223,8 +222,6 @@ export async function evaluateRewards(studentId: string): Promise<number> {
           activityWeek: week,
         });
       }
-    } else {
-      console.log(`[rewards] Student ${studentId} userId ${studentRecord.userId} has no TutorProfile`);
     }
   }
 
