@@ -37,6 +37,7 @@ import {
   setSessionCookie,
 } from "./middleware/auth.js";
 import { evaluateStudentRisk } from "./services/mlAdapter.js";
+<<<<<<< HEAD
 import {
   getGoogleIntegrationStatus,
   getGoogleAuthorizationUrl,
@@ -46,6 +47,8 @@ import {
   updateGoogleCalendarEvent,
   sendGmailMeetingNotification,
 } from "./services/googleService.js";
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 import { env } from "./config/env.js";
 
 export function createApp() {
@@ -1992,6 +1995,7 @@ export function createApp() {
     }
   );
 
+<<<<<<< HEAD
   // ==== 6. MEETINGS & GOOGLE INTEGRATION (REAL GOOGLE CALENDAR + GMAIL) ====
   let googleMockConnected = true;
 
@@ -2048,13 +2052,36 @@ export function createApp() {
     };
   }
 
+=======
+  // ==== 6. MEETINGS & GOOGLE INTEGRATION (MOCK MODE ONLY) ====
+  let googleMockConnected = true;
+
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
   app.get("/api/meetings", requireAuth, async (_req: Request, res: Response) => {
     const meetings = await prisma.meeting.findMany({
       orderBy: { createdAt: "desc" },
     });
 
     res.json({
+<<<<<<< HEAD
       items: meetings.map(formatMeetingRecord),
+=======
+      items: meetings.map((m) => ({
+        id: m.id,
+        title: m.title,
+        organiserId: m.organiserId,
+        organiserName: m.organiserName,
+        participantIds: JSON.parse(m.participantIds) as string[],
+        participantNames: JSON.parse(m.participantNames) as string[],
+        startIso: m.startIso,
+        endIso: m.endIso,
+        timezone: m.timezone,
+        syncStatus: m.syncStatus,
+        integrationMode: "MOCK",
+        locationOrLink: m.locationOrLink ?? undefined,
+        caseId: m.caseId,
+      })),
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
       page: 1,
       pageSize: 20,
       total: meetings.length,
@@ -2079,6 +2106,7 @@ export function createApp() {
 
       const body = parsed.data;
       const user = req.user!;
+<<<<<<< HEAD
 
       // Validate Start and End timestamps
       const startDate = new Date(body.startIso);
@@ -2291,6 +2319,47 @@ export function createApp() {
       }
 
       res.status(201).json(formatMeetingRecord(updatedMeeting));
+=======
+      const student = await prisma.student.findUnique({
+        where: { id: body.participantId },
+      });
+
+      const created = await prisma.meeting.create({
+        data: {
+          id: `MTG-${Date.now()}`,
+          title: "Academic Support Check-in", // Privacy-safe generic title without case details
+          organiserId: user.id,
+          organiserName: user.name,
+          participantIds: JSON.stringify([body.participantId]),
+          participantNames: JSON.stringify([
+            student?.name ?? body.participantId,
+          ]),
+          startIso: body.startIso,
+          endIso: body.endIso,
+          timezone: body.timezone,
+          syncStatus: googleMockConnected ? "SYNCED" : "PENDING",
+          integrationMode: "MOCK",
+          locationOrLink: "Advising Office / Calendar Invite (Mock)",
+          caseId: body.caseId ?? null,
+        },
+      });
+
+      res.status(201).json({
+        id: created.id,
+        title: created.title,
+        organiserId: created.organiserId,
+        organiserName: created.organiserName,
+        participantIds: JSON.parse(created.participantIds) as string[],
+        participantNames: JSON.parse(created.participantNames) as string[],
+        startIso: created.startIso,
+        endIso: created.endIso,
+        timezone: created.timezone,
+        syncStatus: created.syncStatus,
+        integrationMode: "MOCK",
+        locationOrLink: created.locationOrLink ?? undefined,
+        caseId: created.caseId,
+      });
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     }
   );
 
@@ -2317,6 +2386,7 @@ export function createApp() {
         return;
       }
 
+<<<<<<< HEAD
       const user = req.user!;
       const newStartIso = parsed.data.startIso ?? existing.startIso;
       const newEndIso = parsed.data.endIso ?? existing.endIso;
@@ -2467,11 +2537,37 @@ export function createApp() {
         configured: gStatus.configured,
         authUrl: gStatus.authUrl,
         accountEmail: gStatus.accountEmail,
+=======
+      const updated = await prisma.meeting.update({
+        where: { id: mtgId },
+        data: {
+          startIso: parsed.data.startIso ?? existing.startIso,
+          endIso: parsed.data.endIso ?? existing.endIso,
+          syncStatus: parsed.data.resync ? "SYNCED" : existing.syncStatus,
+        },
+      });
+
+      res.json({
+        id: updated.id,
+        title: updated.title,
+        organiserId: updated.organiserId,
+        organiserName: updated.organiserName,
+        participantIds: JSON.parse(updated.participantIds) as string[],
+        participantNames: JSON.parse(updated.participantNames) as string[],
+        startIso: updated.startIso,
+        endIso: updated.endIso,
+        timezone: updated.timezone,
+        syncStatus: updated.syncStatus,
+        integrationMode: "MOCK",
+        locationOrLink: updated.locationOrLink ?? undefined,
+        caseId: updated.caseId,
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
       });
     }
   );
 
   app.get(
+<<<<<<< HEAD
     "/api/integrations/google/auth-url",
     requireRoles(STAFF_ROLES),
     (req: Request, res: Response) => {
@@ -2522,12 +2618,27 @@ export function createApp() {
           );
         }
       }
+=======
+    "/api/integrations/google/status",
+    requireAuth,
+    (req: Request, res: Response) => {
+      const user = req.user!;
+      const canManage = user.roles.some((r) => STAFF_ROLES.includes(r));
+      res.json({
+        connected: googleMockConnected,
+        mode: "MOCK",
+        organiserEmail: user.email ?? "mentor@learntrack.edu",
+        lastSyncedAt: "2026-10-12T10:00:00.000Z",
+        canManage,
+      });
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     }
   );
 
   app.post(
     "/api/integrations/google/connect",
     requireRoles(STAFF_ROLES),
+<<<<<<< HEAD
     async (req: Request, res: Response) => {
       const user = req.user!;
       const gStatus = await getGoogleIntegrationStatus(user.id);
@@ -2561,6 +2672,16 @@ export function createApp() {
         configured: gStatus.configured,
         authUrl: gStatus.authUrl,
         accountEmail: gStatus.accountEmail,
+=======
+    (req: Request, res: Response) => {
+      googleMockConnected = true;
+      res.json({
+        connected: true,
+        mode: "MOCK",
+        organiserEmail: req.user?.email ?? "mentor@learntrack.edu",
+        lastSyncedAt: new Date().toISOString(),
+        canManage: true,
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
       });
     }
   );
@@ -2568,6 +2689,7 @@ export function createApp() {
   app.post(
     "/api/integrations/google/disconnect",
     requireRoles(STAFF_ROLES),
+<<<<<<< HEAD
     async (req: Request, res: Response) => {
       const user = req.user!;
       googleMockConnected = false;
@@ -2585,6 +2707,16 @@ export function createApp() {
         configured: gStatus.configured,
         authUrl: gStatus.authUrl,
         accountEmail: null,
+=======
+    (req: Request, res: Response) => {
+      googleMockConnected = false;
+      res.json({
+        connected: false,
+        mode: "MOCK",
+        organiserEmail: req.user?.email ?? "mentor@learntrack.edu",
+        lastSyncedAt: new Date().toISOString(),
+        canManage: true,
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
       });
     }
   );

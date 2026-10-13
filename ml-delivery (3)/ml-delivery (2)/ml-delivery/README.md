@@ -14,6 +14,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 The training script creates synthetic data, fits a student-level train/validation/test split, selects a model and threshold on validation data, evaluates once on the held-out test set, and exports artifacts. It does not use any paid API or GPU.
 
 ## API
+<<<<<<< HEAD
 - `GET /`: Fast service status and API catalog.
 - `GET /health`: System readiness, model status, and non-sensitive OCR configuration.
 - `POST /predict`: Predict student performance risk from time-series observations.
@@ -26,10 +27,17 @@ The training script creates synthetic data, fits a student-level train/validatio
 - `POST /documents/{id}/predict-compatibility`: Bridge verified marks to the ML prediction engine.
 
 ### Prediction Example:
+=======
+- `GET /health`
+- `POST /predict`
+
+Example:
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 ```bash
 curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" --data @examples/prediction-request.json
 ```
 
+<<<<<<< HEAD
 ### Document Parsing Example:
 ```bash
 curl -X POST "http://127.0.0.1:8000/documents/parse?language=hi" \
@@ -62,6 +70,8 @@ Copy `.env.example` to `.env` and provide your credentials:
 - `BHASHINI_OCR_SERVICE_ID`: Upstream OCR service ID (default: `bhashini/bodhan/indic-doc/ocr`).
 - `MAX_IMAGE_UPLOAD_MB`: Maximum permitted upload size (default: 5 MB).
 
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 ## Integration
 Node/Express should call `POST http://127.0.0.1:8000/predict` with a configurable base URL, use a finite timeout (for example 3–5 seconds for a local demo), check `/health` at startup/readiness, and handle HTTP 503/timeouts with a graceful `prediction unavailable` state. Do not silently convert unavailable predictions to low risk. Persist the request/response according to institutional privacy and retention rules. Keep request schema and model package versions pinned together. For production, use authentication, authorization, TLS, logging controls and institution-approved data governance.
 

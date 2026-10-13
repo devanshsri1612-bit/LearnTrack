@@ -140,15 +140,22 @@ export const NotificationStateBadge: React.FC<{ state: NotificationState }> = ({
 export const SyncStatusBadge: React.FC<{
   syncStatus: MeetingSyncStatus;
   integrationMode: IntegrationMode;
+<<<<<<< HEAD
   googleEventId?: string;
   meetLink?: string;
   calendarError?: string;
 }> = ({ syncStatus, integrationMode, googleEventId, meetLink, calendarError }) => {
+=======
+}> = ({ syncStatus, integrationMode }) => {
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
   return (
     <div className="inline-flex items-center gap-1.5 flex-wrap">
       <span
         role="status"
+<<<<<<< HEAD
         title={calendarError || undefined}
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
         aria-label={`Sync status: ${syncStatus}`}
         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
           syncStatus === "SYNCED"
@@ -176,6 +183,7 @@ export const SyncStatusBadge: React.FC<{
           Mock, not actually sent
         </span>
       )}
+<<<<<<< HEAD
       {googleEventId && (
         <span
           title={`Google Event: ${googleEventId}`}
@@ -194,10 +202,13 @@ export const SyncStatusBadge: React.FC<{
           Meet Link ↗
         </a>
       )}
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     </div>
   );
 };
 
+<<<<<<< HEAD
 export const MeetingNotificationBadge: React.FC<{
   status?: "PENDING" | "SENT" | "FAILED" | "UNAVAILABLE";
   error?: string;
@@ -233,3 +244,5 @@ export const MeetingNotificationBadge: React.FC<{
   );
 };
 
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea

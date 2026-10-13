@@ -42,11 +42,14 @@ const NAV_ITEMS: NavItem[] = [
     label: "Impact & Leadership",
     allowedRoles: ["HOD", "ADMIN"],
   },
+<<<<<<< HEAD
   {
     to: "/documents-ocr",
     label: "Document OCR",
     allowedRoles: STAFF_ROLES,
   },
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
   // Student & Peer Tutor navigation
   {
     to: "/my-support",

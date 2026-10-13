@@ -316,6 +316,7 @@ model SessionFeedback {
 }
 
 model Meeting {
+<<<<<<< HEAD
   id                 String    @id
   title              String
   organiserId        String
@@ -337,12 +338,29 @@ model Meeting {
   notificationError  String?
   notificationSentAt DateTime?
   createdAt          DateTime  @default(now())
+=======
+  id               String   @id
+  title            String
+  organiserId      String
+  organiserName    String
+  participantIds   String   // JSON array
+  participantNames String   // JSON array
+  startIso         String
+  endIso           String
+  timezone         String   @default("Asia/Kolkata")
+  syncStatus       String   @default("SYNCED") // PENDING | SYNCED | FAILED
+  integrationMode  String   @default("MOCK")   // MOCK | LIVE | DISABLED
+  locationOrLink   String?
+  caseId           String?
+  createdAt        DateTime @default(now())
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 
   organiser User @relation("MeetingOrganiser", fields: [organiserId], references: [id])
 
   @@index([organiserId])
 }
 
+<<<<<<< HEAD
 model GoogleOAuthToken {
   id           String    @id
   userId       String?   @unique
@@ -356,6 +374,8 @@ model GoogleOAuthToken {
   updatedAt    DateTime  @updatedAt
 }
 
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 model Notification {
   id          String   @id
   recipientId String

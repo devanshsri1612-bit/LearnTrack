@@ -37,6 +37,7 @@ class PredictionResponse(BaseModel):
     limitations: list[str]
     computedAt: str
     source: str
+<<<<<<< HEAD
 
 
 class OCRResultItem(BaseModel):
@@ -115,3 +116,5 @@ class ConfirmedDocumentRecord(BaseModel):
     rawText: str = ""
     confirmedAt: str
     notes: Optional[str] = None
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea

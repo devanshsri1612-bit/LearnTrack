@@ -377,10 +377,15 @@ describe("LearnTrack Frontend End-to-End Spec Verification", () => {
       subject: "DSA",
       taskType: "FACULTY_REVIEW_TASK",
     });
+<<<<<<< HEAD
+=======
+    expect(capturedTaskPayload.studentId).toBeUndefined();
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     expect(
       await screen.findByText(/Faculty review task C-901 created/i)
     ).toBeInTheDocument();
   });
+<<<<<<< HEAD
 
   it("10. renders Meetings & Calendar Integration with Google status, privacy-safe title, and notification badge", async () => {
     resetMockDb("mentor@learntrack.edu");
@@ -403,5 +408,7 @@ describe("LearnTrack Frontend End-to-End Spec Verification", () => {
       await screen.findByRole("heading", { name: /Scheduled Meetings/i })
     ).toBeInTheDocument();
   });
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 });
 

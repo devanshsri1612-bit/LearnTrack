@@ -1,12 +1,20 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
+=======
+import React, { useState } from "react";
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreateMeetingRequestSchema } from "@learntrack/contracts";
 import { api } from "../api/endpoints";
+<<<<<<< HEAD
 import {
   SyncStatusBadge,
   MeetingNotificationBadge,
 } from "../components/StatusBadges";
+=======
+import { SyncStatusBadge } from "../components/StatusBadges";
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 import { LoadingSkeleton, PanelErrorState } from "../components/StateViews";
 import { formatLocalDateTime, getUserLocalTimezone } from "../utils/date";
 
@@ -25,6 +33,7 @@ export const MeetingsPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [resyncingId, setResyncingId] = useState<string | null>(null);
+<<<<<<< HEAD
   const [resendingId, setResendingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,6 +45,8 @@ export const MeetingsPage: React.FC = () => {
       setFormError(searchParams.get("message") || "Google authorization failed.");
     }
   }, [searchParams, queryClient]);
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 
   const googleStatusQuery = useQuery({
     queryKey: ["googleStatus"],
@@ -51,10 +62,13 @@ export const MeetingsPage: React.FC = () => {
     mutationFn: () => api.meetings.connectGoogle(),
     onSuccess: (updated) => {
       setFormError(null);
+<<<<<<< HEAD
       if (updated.authUrl && updated.mode === "LIVE") {
         window.location.href = updated.authUrl;
         return;
       }
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
       setActionNotice(
         `Google Calendar connected (Mode: ${updated.mode}).`
       );
@@ -90,6 +104,7 @@ export const MeetingsPage: React.FC = () => {
       api.meetings.create(payload),
     onSuccess: (created) => {
       setFormError(null);
+<<<<<<< HEAD
       const emailStatus = created.notificationStatus
         ? ` | Gmail: ${created.notificationStatus}`
         : "";
@@ -97,6 +112,10 @@ export const MeetingsPage: React.FC = () => {
         `Meeting ${created.id} scheduled (${formatLocalDateTime(
           created.startIso
         )}) — Calendar: ${created.syncStatus} (${created.integrationMode})${emailStatus}.`
+=======
+      setActionNotice(
+        `Meeting ${created.id} scheduled (${formatLocalDateTime(created.startIso)}) — Sync status: ${created.syncStatus} (${created.integrationMode}).`
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
       );
       void queryClient.invalidateQueries({ queryKey: ["meetings"] });
     },
@@ -130,6 +149,7 @@ export const MeetingsPage: React.FC = () => {
     },
   });
 
+<<<<<<< HEAD
   const resendEmailMutation = useMutation({
     mutationFn: (id: string) => {
       setResendingId(id);
@@ -154,6 +174,8 @@ export const MeetingsPage: React.FC = () => {
     },
   });
 
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
   const handleCreateMeeting = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -209,7 +231,11 @@ export const MeetingsPage: React.FC = () => {
           </p>
         </div>
 
+<<<<<<< HEAD
         {/* Google Calendar & Gmail Integration Status */}
+=======
+        {/* Google Calendar Integration Status & Organiser Connect/Disconnect */}
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
         {gStatus && (
           <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
             <div>
@@ -218,11 +244,14 @@ export const MeetingsPage: React.FC = () => {
                 {gStatus.connected ? "Connected" : "Disconnected"} (Mode:{" "}
                 {gStatus.mode})
               </div>
+<<<<<<< HEAD
               {gStatus.accountEmail && (
                 <div className="text-[11px] text-slate-600 font-mono">
                   Account: {gStatus.accountEmail}
                 </div>
               )}
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
               {gStatus.mode === "MOCK" && (
                 <div className="text-amber-900 font-semibold">
                   Mock, not actually sent
@@ -243,6 +272,7 @@ export const MeetingsPage: React.FC = () => {
                       ? "Disconnecting..."
                       : "Disconnect"}
                   </button>
+<<<<<<< HEAD
                 ) : gStatus.authUrl && gStatus.mode === "LIVE" ? (
                   <a
                     href={gStatus.authUrl}
@@ -250,6 +280,8 @@ export const MeetingsPage: React.FC = () => {
                   >
                     Authorize Google
                   </a>
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
                 ) : (
                   <button
                     type="button"
@@ -401,8 +433,12 @@ export const MeetingsPage: React.FC = () => {
                   <th className="py-3 px-4">Calendar Event Title</th>
                   <th className="py-3 px-4">Participants</th>
                   <th className="py-3 px-4">Time ({timezone})</th>
+<<<<<<< HEAD
                   <th className="py-3 px-4">Calendar Sync</th>
                   <th className="py-3 px-4">Gmail Notification</th>
+=======
+                  <th className="py-3 px-4">Sync & Integration Status</th>
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
                   <th className="py-3 px-4">Actions</th>
                 </tr>
               </thead>
@@ -416,11 +452,14 @@ export const MeetingsPage: React.FC = () => {
                       <div className="text-[11px] text-slate-500">
                         Contains no sensitive case details
                       </div>
+<<<<<<< HEAD
                       {mtg.googleEventId && (
                         <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                           ID: {mtg.googleEventId.slice(0, 16)}…
                         </div>
                       )}
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
                     </td>
                     <td className="py-3 px-4">
                       <div>Organiser: {mtg.organiserName}</div>
@@ -437,6 +476,7 @@ export const MeetingsPage: React.FC = () => {
                       <SyncStatusBadge
                         syncStatus={mtg.syncStatus}
                         integrationMode={mtg.integrationMode}
+<<<<<<< HEAD
                         googleEventId={mtg.googleEventId ?? undefined}
                         meetLink={mtg.meetLink ?? undefined}
                         calendarError={mtg.calendarError ?? undefined}
@@ -481,6 +521,21 @@ export const MeetingsPage: React.FC = () => {
                           </button>
                         )}
                       </div>
+=======
+                      />
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        disabled={patchMeetingMutation.isPending && resyncingId === mtg.id}
+                        onClick={() => patchMeetingMutation.mutate(mtg.id)}
+                        className="px-2.5 py-1 rounded border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 disabled:opacity-50"
+                      >
+                        {patchMeetingMutation.isPending && resyncingId === mtg.id
+                          ? "Syncing..."
+                          : "Re-sync"}
+                      </button>
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
                     </td>
                   </tr>
                 ))}
@@ -492,3 +547,7 @@ export const MeetingsPage: React.FC = () => {
     </div>
   );
 };
+<<<<<<< HEAD
+=======
+
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea

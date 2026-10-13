@@ -23,7 +23,10 @@ import { MySupportPage } from "./pages/MySupportPage";
 import { CheckInPage } from "./pages/CheckInPage";
 import { ConsentPage } from "./pages/ConsentPage";
 import { TutorWorkspacePage } from "./pages/TutorWorkspacePage";
+<<<<<<< HEAD
 import { DocumentOCRPage } from "./pages/DocumentOCRPage";
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 
 const HomeRedirect: React.FC = () => {
   const { user, activeRole } = useAuth();
@@ -117,6 +120,7 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+<<<<<<< HEAD
           <Route
             path="/documents-ocr"
             element={
@@ -125,6 +129,8 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 
           {/* Student & Peer Tutor routes */}
           <Route

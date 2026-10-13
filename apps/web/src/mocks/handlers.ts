@@ -1741,8 +1741,11 @@ export const handlers = [
       integrationMode: db.googleStatus.mode,
       locationOrLink: "Advising Office / Calendar Invite",
       caseId: body.caseId ?? null,
+<<<<<<< HEAD
       googleEventId: `mock-gcal-${Date.now()}`,
       notificationStatus: "SENT",
+=======
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     };
     db.meetings.unshift(created);
     return HttpResponse.json(created, { status: 201 });
@@ -1759,6 +1762,7 @@ export const handlers = [
         { status: 404 }
       );
     }
+<<<<<<< HEAD
     const body = (await request.json()) as {
       startIso?: string;
       endIso?: string;
@@ -1769,6 +1773,12 @@ export const handlers = [
     if (body.endIso) mtg.endIso = body.endIso;
     if (body.resync) mtg.syncStatus = "SYNCED";
     if (body.resendNotification) mtg.notificationStatus = "SENT";
+=======
+    const body = (await request.json()) as { startIso?: string; endIso?: string; resync?: boolean };
+    if (body.startIso) mtg.startIso = body.startIso;
+    if (body.endIso) mtg.endIso = body.endIso;
+    if (body.resync) mtg.syncStatus = "SYNCED";
+>>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     return HttpResponse.json(mtg);
   }),
 
