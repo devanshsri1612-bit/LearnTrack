@@ -85,3 +85,12 @@ This automatically backs up `dev.db` to `dev.db.bak`, resets tables using Prisma
 1. **Simulated Prize Draws**: The lucky draw item in the catalog is labeled `SIMULATED` and acts as a demonstration entry queue without external lottery dependencies.
 2. **No Quiz Module**: LearnTrack focuses on behavioral engagement and peer support; marks and quiz results are intentionally absent from reward logic.
 3. **Seeded Cohorts Below Minimum Group Size**: In the seeded demo database, all cohorts (`CS-2024-A` with $n=3$, `ECE-2024-B` with $n=1$, `ME-2025-A` with $n=1$) have sizes below $n=30$. Consequently, cohort metrics are correctly suppressed in the HOD/Admin dashboard to showcase the privacy protection feature.
+
+## Quick start
+1. npm install
+2. Copy apps/api/.env.example to apps/api/.env
+3. npm run db:reset --workspace=@learntrack/api
+4. npm run dev   (API on :4000, web on :5173)
+Demo password for all seeded accounts: demo-password
+Windows note: if npm fails with "spawn ... ENOENT", set COMSPEC to
+C:\Windows\System32\cmd.exe for that terminal.
