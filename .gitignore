@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+__pycache__/
+*.pyc
+cookies.txt
+*.bak
+*.bak
+apps/api/prisma/dev.db
+*.bak

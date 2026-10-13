@@ -42,10 +42,20 @@ const NAV_ITEMS: NavItem[] = [
     label: "Impact & Leadership",
     allowedRoles: ["HOD", "ADMIN"],
   },
+  {
+    to: "/rewards-admin",
+    label: "Rewards Admin",
+    allowedRoles: ["HOD", "ADMIN", "FINANCE"],
+  },
   // Student & Peer Tutor navigation
   {
     to: "/my-support",
     label: "My Support",
+    allowedRoles: ["STUDENT", "PEER_TUTOR"],
+  },
+  {
+    to: "/my-rewards",
+    label: "My Rewards",
     allowedRoles: ["STUDENT", "PEER_TUTOR"],
   },
   {
@@ -86,7 +96,9 @@ export const AppLayout: React.FC = () => {
 
   const handleRoleChange = (newRole: Role) => {
     setActiveRole(newRole);
-    if (STAFF_ROLES.includes(newRole)) {
+    if (newRole === "FINANCE") {
+      navigate("/rewards-admin");
+    } else if (STAFF_ROLES.includes(newRole)) {
       navigate("/queue");
     } else if (newRole === "PEER_TUTOR") {
       navigate("/tutor-workspace");

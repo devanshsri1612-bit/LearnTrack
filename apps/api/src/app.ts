@@ -21,6 +21,8 @@ import {
   PatchMeetingRequestSchema,
   CreateCheckInRequestSchema,
   PatchConsentRequestSchema,
+  RedeemRequestSchema,
+  PatchRedemptionRequestSchema,
   CaseLifecycleStatus,
   DeadlineStatus,
   AllowedTransition,
@@ -33,10 +35,16 @@ import {
   clearSessionCookie,
   loadUserFromCookie,
   requireAuth,
+  requireCsrf,
   requireRoles,
   setSessionCookie,
 } from "./middleware/auth.js";
 import { evaluateStudentRisk } from "./services/mlAdapter.js";
+import {
+  evaluateRewards,
+  evaluateAllStudents,
+  MIN_REWARDS_GROUP_SIZE,
+} from "./services/rewardRules.js";
 import { env } from "./config/env.js";
 
 export function createApp() {
@@ -1965,6 +1973,26 @@ export function createApp() {
         });
       });
 
+      // Trigger reward evaluation on tutoring session completion
+      try {
+        await evaluateRewards(updated.studentId);
+        const tutorProf = await prisma.tutorProfile.findUnique({
+          where: { id: updated.tutorId },
+          select: { userId: true },
+        });
+        if (tutorProf?.userId) {
+          const tutorStudent = await prisma.student.findUnique({
+            where: { userId: tutorProf.userId },
+            select: { id: true },
+          });
+          if (tutorStudent && tutorStudent.id !== updated.studentId) {
+            await evaluateRewards(tutorStudent.id);
+          }
+        }
+      } catch (err) {
+        console.error("Error evaluating rewards on session completion:", err);
+      }
+
       res.json({
         id: updated.id,
         tutorId: updated.tutorId,
@@ -2721,6 +2749,445 @@ export function createApp() {
             synthetic: true,
           },
         ],
+        synthetic: true,
+      });
+    }
+  );
+
+  // ==== 12. REWARDS & LEARNCOINS ====
+  app.post(
+    "/api/rewards/evaluate",
+    requireRoles(["HOD", "ADMIN"]),
+    requireCsrf,
+    async (_req: Request, res: Response) => {
+      const summary = await evaluateAllStudents();
+      res.json({
+        evaluatedStudents: summary.evaluatedStudents,
+        newEntriesCount: summary.newEntriesCount,
+        synthetic: true,
+      });
+    }
+  );
+
+  app.get(
+    "/api/rewards/me",
+    requireRoles(["STUDENT", "PEER_TUTOR"]),
+    async (req: Request, res: Response) => {
+      const studentId = req.user!.studentId;
+      if (!studentId) {
+        res.status(400).json({
+          error: {
+            code: "NO_STUDENT_PROFILE",
+            message: "User is not linked to a student record.",
+          },
+        });
+        return;
+      }
+
+      const ledger = await prisma.rewardLedgerEntry.findMany({
+        where: { studentId },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const ledgerSum = await prisma.rewardLedgerEntry.aggregate({
+        where: { studentId },
+        _sum: { points: true },
+      });
+
+      const redemptionsSum = await prisma.redemption.aggregate({
+        where: { studentId, status: { not: "CANCELLED" } },
+        _sum: { cost: true },
+      });
+
+      const balance = Math.max(
+        0,
+        (ledgerSum._sum.points ?? 0) - (redemptionsSum._sum.cost ?? 0)
+      );
+
+      const myRedemptions = await prisma.redemption.findMany({
+        where: { studentId, status: { not: "CANCELLED" } },
+        select: { itemId: true },
+      });
+      const enteredItemIds = new Set(myRedemptions.map((r) => r.itemId));
+
+      const catalogItems = await prisma.rewardItem.findMany({
+        orderBy: { cost: "asc" },
+      });
+
+      const catalog = catalogItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        cost: item.cost,
+        stock: item.stock,
+        isDraw: item.isDraw,
+        simulated: item.simulated,
+        entered: item.isDraw ? enteredItemIds.has(item.id) : undefined,
+      }));
+
+      const unaffordable = catalogItems.filter((i) => i.cost > balance);
+      let nextRewardName: string | null = null;
+      let nextRewardCost: number | null = null;
+      let pointsNeeded = 0;
+      let percent = 100;
+
+      if (unaffordable.length > 0) {
+        const nextTarget = unaffordable[0];
+        nextRewardName = nextTarget.name;
+        nextRewardCost = nextTarget.cost;
+        pointsNeeded = nextTarget.cost - balance;
+        percent = Math.min(
+          100,
+          Math.max(0, Math.round((balance / nextTarget.cost) * 100))
+        );
+      }
+
+      res.json({
+        studentId,
+        balance,
+        ledger: ledger.map((e) => ({
+          id: e.id,
+          studentId: e.studentId,
+          sourceType: e.sourceType,
+          sourceId: e.sourceId,
+          points: e.points,
+          reason: e.reason,
+          activityWeek: e.activityWeek ?? undefined,
+          createdAt: e.createdAt.toISOString(),
+        })),
+        catalog,
+        progress: {
+          nextRewardName,
+          nextRewardCost,
+          pointsNeeded,
+          percent,
+        },
+        synthetic: true,
+      });
+    }
+  );
+
+  app.post(
+    "/api/rewards/redeem",
+    requireRoles(["STUDENT", "PEER_TUTOR"]),
+    requireCsrf,
+    async (req: Request, res: Response) => {
+      const studentId = req.user!.studentId;
+      if (!studentId) {
+        res.status(400).json({
+          error: {
+            code: "NO_STUDENT_PROFILE",
+            message: "User is not linked to a student record.",
+          },
+        });
+        return;
+      }
+
+      const parsed = RedeemRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: parsed.error.issues[0]?.message ?? "Invalid redeem payload.",
+          },
+        });
+        return;
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const item = await tx.rewardItem.findUnique({
+          where: { id: parsed.data.itemId },
+        });
+        if (!item) {
+          return {
+            error: {
+              status: 404,
+              code: "NOT_FOUND",
+              message: "Reward item not found.",
+            },
+          };
+        }
+
+        if (item.stock <= 0) {
+          return {
+            error: {
+              status: 400,
+              code: "OUT_OF_STOCK",
+              message: "Reward item is out of stock.",
+            },
+          };
+        }
+
+        if (item.isDraw) {
+          const existingDraw = await tx.redemption.findFirst({
+            where: {
+              studentId,
+              itemId: item.id,
+              status: { not: "CANCELLED" },
+            },
+          });
+          if (existingDraw) {
+            return {
+              error: {
+                status: 400,
+                code: "DRAW_ENTRY_LIMIT",
+                message: "You have already entered this lucky draw.",
+              },
+            };
+          }
+        }
+
+        const ledgerSum = await tx.rewardLedgerEntry.aggregate({
+          where: { studentId },
+          _sum: { points: true },
+        });
+
+        const redemptionsSum = await tx.redemption.aggregate({
+          where: { studentId, status: { not: "CANCELLED" } },
+          _sum: { cost: true },
+        });
+
+        const currentBalance =
+          (ledgerSum._sum.points ?? 0) - (redemptionsSum._sum.cost ?? 0);
+
+        if (currentBalance < item.cost) {
+          return {
+            error: {
+              status: 400,
+              code: "INSUFFICIENT_BALANCE",
+              message: "Insufficient LearnCoins balance for this item.",
+            },
+          };
+        }
+
+        await tx.rewardItem.update({
+          where: { id: item.id },
+          data: { stock: { decrement: 1 } },
+        });
+
+        const redemption = await tx.redemption.create({
+          data: {
+            id: `RED-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            studentId,
+            itemId: item.id,
+            cost: item.cost,
+            status: "PENDING",
+          },
+          include: { item: true },
+        });
+
+        return { redemption };
+      });
+
+      if ("error" in result && result.error) {
+        res.status(result.error.status).json({
+          error: {
+            code: result.error.code,
+            message: result.error.message,
+          },
+        });
+        return;
+      }
+
+      res.status(201).json({
+        id: result.redemption.id,
+        studentId: result.redemption.studentId,
+        itemId: result.redemption.itemId,
+        cost: result.redemption.cost,
+        status: result.redemption.status,
+        createdAt: result.redemption.createdAt.toISOString(),
+        item: {
+          id: result.redemption.item.id,
+          name: result.redemption.item.name,
+          description: result.redemption.item.description,
+          cost: result.redemption.item.cost,
+          stock: result.redemption.item.stock,
+          isDraw: result.redemption.item.isDraw,
+          simulated: result.redemption.item.simulated,
+        },
+      });
+    }
+  );
+
+  app.patch(
+    "/api/rewards/redemptions/:id",
+    requireRoles(["FINANCE", "ADMIN"]),
+    requireCsrf,
+    async (req: Request, res: Response) => {
+      const redemptionId = String(req.params.id);
+      const parsed = PatchRedemptionRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message:
+              parsed.error.issues[0]?.message ?? "Invalid redemption patch.",
+          },
+        });
+        return;
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const redemption = await tx.redemption.findUnique({
+          where: { id: redemptionId },
+          include: { item: true },
+        });
+
+        if (!redemption) {
+          return {
+            error: {
+              status: 404,
+              code: "NOT_FOUND",
+              message: "Redemption not found.",
+            },
+          };
+        }
+
+        if (redemption.status !== "PENDING") {
+          return {
+            error: {
+              status: 400,
+              code: "INVALID_STATUS_TRANSITION",
+              message: `Redemption is already ${redemption.status.toLowerCase()} and cannot be updated.`,
+            },
+          };
+        }
+
+        if (parsed.data.status === "CANCELLED") {
+          await tx.rewardItem.update({
+            where: { id: redemption.itemId },
+            data: { stock: { increment: 1 } },
+          });
+        }
+
+        const updated = await tx.redemption.update({
+          where: { id: redemptionId },
+          data: { status: parsed.data.status },
+          include: { item: true },
+        });
+
+        return { updated };
+      });
+
+      if ("error" in result && result.error) {
+        res.status(result.error.status).json({
+          error: {
+            code: result.error.code,
+            message: result.error.message,
+          },
+        });
+        return;
+      }
+
+      res.json({
+        id: result.updated.id,
+        studentId: result.updated.studentId,
+        itemId: result.updated.itemId,
+        cost: result.updated.cost,
+        status: result.updated.status,
+        createdAt: result.updated.createdAt.toISOString(),
+        item: {
+          id: result.updated.item.id,
+          name: result.updated.item.name,
+          description: result.updated.item.description,
+          cost: result.updated.item.cost,
+          stock: result.updated.item.stock,
+          isDraw: result.updated.item.isDraw,
+          simulated: result.updated.item.simulated,
+        },
+      });
+    }
+  );
+
+  app.get(
+    "/api/rewards/redemptions",
+    requireRoles(["FINANCE", "ADMIN"]),
+    async (_req: Request, res: Response) => {
+      const redemptions = await prisma.redemption.findMany({
+        include: { item: true, student: true },
+        orderBy: { createdAt: "desc" },
+      });
+      res.json({
+        items: redemptions.map((r) => ({
+          id: r.id,
+          studentDisplayName: r.student.name,
+          itemName: r.item.name,
+          cost: r.cost,
+          status: r.status,
+          createdAt: r.createdAt.toISOString(),
+        })),
+        synthetic: true,
+      });
+    }
+  );
+
+  app.get(
+    "/api/rewards/summary",
+    requireRoles(["HOD", "ADMIN"]),
+    async (_req: Request, res: Response) => {
+      const issuedAgg = await prisma.rewardLedgerEntry.aggregate({
+        _sum: { points: true },
+      });
+      const totalPointsIssued = issuedAgg._sum.points ?? 0;
+
+      const redeemedAgg = await prisma.redemption.aggregate({
+        where: { status: { not: "CANCELLED" } },
+        _sum: { cost: true },
+      });
+      const totalPointsRedeemed = redeemedAgg._sum.cost ?? 0;
+
+      const totalRedemptions = await prisma.redemption.count();
+      const fulfilledRedemptions = await prisma.redemption.count({
+        where: { status: "FULFILLED" },
+      });
+
+      const students = await prisma.student.findMany({
+        select: { id: true, cohort: true },
+      });
+
+      const cohortStudentMap = new Map<string, string[]>();
+      for (const s of students) {
+        const list = cohortStudentMap.get(s.cohort) ?? [];
+        list.push(s.id);
+        cohortStudentMap.set(s.cohort, list);
+      }
+
+      const cohortSummaries = [];
+      for (const [cohort, studentIds] of cohortStudentMap.entries()) {
+        const studentCount = studentIds.length;
+        if (studentCount < MIN_REWARDS_GROUP_SIZE) {
+          cohortSummaries.push({
+            cohort,
+            studentCount,
+            pointsIssued: null,
+            redemptionsCount: null,
+            insufficientData: true,
+            note: `Cohort size is below privacy threshold (n < ${MIN_REWARDS_GROUP_SIZE}); aggregate reward metrics are suppressed to protect student privacy.`,
+          });
+        } else {
+          const pointsAgg = await prisma.rewardLedgerEntry.aggregate({
+            where: { studentId: { in: studentIds } },
+            _sum: { points: true },
+          });
+          const redemptionsCount = await prisma.redemption.count({
+            where: { studentId: { in: studentIds } },
+          });
+          cohortSummaries.push({
+            cohort,
+            studentCount,
+            pointsIssued: pointsAgg._sum.points ?? 0,
+            redemptionsCount,
+            insufficientData: false,
+          });
+        }
+      }
+
+      res.json({
+        totalPointsIssued,
+        totalPointsRedeemed,
+        totalRedemptions,
+        fulfilledRedemptions,
+        cohorts: cohortSummaries,
         synthetic: true,
       });
     }

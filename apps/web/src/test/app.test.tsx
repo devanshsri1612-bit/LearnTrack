@@ -382,5 +382,168 @@ describe("LearnTrack Frontend End-to-End Spec Verification", () => {
       await screen.findByText(/Faculty review task C-901 created/i)
     ).toBeInTheDocument();
   });
+
+  it("10. My Rewards: displays balance, friendly ledger, SIMULATED badge, and disables Redeem with reason when short", async () => {
+    resetMockDb("student@learntrack.edu");
+    const user = userEvent.setup();
+    renderApp(["/my-rewards"]);
+
+    // Heading and private scope
+    expect(
+      await screen.findByRole("heading", { name: /My Rewards \(LearnCoins\)/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Private & Confidential to You/i)).toBeInTheDocument();
+
+    // S-104 balance is 20
+    expect(screen.getByText("20")).toBeInTheDocument();
+    expect(screen.getAllByText(/attendance consistency/i).length).toBeGreaterThan(0);
+
+    // Badges: SIMULATED badge on sponsored items
+    const simulatedBadges = screen.getAllByText("SIMULATED");
+    expect(simulatedBadges.length).toBeGreaterThan(0);
+
+    // Affordable item: "Print Credits (50 Pages)" (cost 20) has an enabled Redeem button
+    const printItemContainer = screen.getByText(/Print Credits \(50 Pages\)/i).closest("div");
+    expect(printItemContainer).not.toBeNull();
+
+    // Short-on-points item: "Mock Technical Interview Session" (cost 60)
+    // S-104 has 20 points, so needs 40 more
+    expect(screen.getByText(/Need 40 more LearnCoins/i)).toBeInTheDocument();
+
+    // Unaffordable item's button is disabled
+    const expensiveCard = screen.getByText(/Mock Technical Interview Session/i).closest(".bg-white");
+    const disabledRedeemBtn = expensiveCard?.querySelector("button");
+    expect(disabledRedeemBtn).toBeDisabled();
+
+    // Clicking enabled Redeem button opens confirmation modal
+    const printCard = screen.getByText(/Print Credits \(50 Pages\)/i).closest(".bg-white");
+    const enabledRedeemBtn = printCard?.querySelector("button");
+    expect(enabledRedeemBtn).not.toBeDisabled();
+    await user.click(enabledRedeemBtn!);
+
+    // Dialog appears with confirmation details
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/Confirm Reward Redemption/i)).toBeInTheDocument();
+    expect(screen.getByText(/Remaining Balance:/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm Redemption/i })).toBeInTheDocument();
+
+    // Dismiss dialog
+    await user.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("11. Rewards Admin: displays institution totals and minimum group size (n >= 30) suppression message for small cohorts", async () => {
+    resetMockDb("hod@learntrack.edu");
+    renderApp(["/rewards-admin"]);
+
+    expect(
+      await screen.findByRole("heading", { name: /Rewards Administration & Oversight/i })
+    ).toBeInTheDocument();
+
+    // Institution totals cards
+    expect(screen.getByText(/Total Points Issued/i)).toBeInTheDocument();
+    expect(screen.getByText(/Total Points Redeemed/i)).toBeInTheDocument();
+    expect(screen.getByText(/Total Redemptions/i)).toBeInTheDocument();
+
+    // Weekly evaluation button
+    expect(screen.getByRole("button", { name: /Run Weekly Evaluation/i })).toBeInTheDocument();
+
+    // Cohorts table and privacy suppression message for cohorts with N < 30
+    expect(screen.getByText("CS-2024-A")).toBeInTheDocument();
+    expect(screen.getByText("ECE-2024-B")).toBeInTheDocument();
+    expect(screen.getByText("ME-2025-A")).toBeInTheDocument();
+
+    const privacyNotices = screen.getAllByText(/Cohort size is below privacy threshold \(n < 30\)/i);
+    expect(privacyNotices.length).toBeGreaterThan(0);
+  });
+
+  it("12. Student cannot open /rewards-admin and receives AccessDeniedScreen", async () => {
+    resetMockDb("student@learntrack.edu");
+    renderApp(["/rewards-admin"]);
+
+    expect(
+      await screen.findByRole("heading", { name: /You do not have access/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Rewards Administration & Oversight/i)).not.toBeInTheDocument();
+  });
+
+  it("13. Rewards mutation clearly fails when missing CSRF header", async () => {
+    resetMockDb("student@learntrack.edu");
+
+    // Making a POST request without X-CSRF-Token fails with 403 CSRF_INVALID
+    const res = await fetch("/api/rewards/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId: "REW-PRINT" }),
+    });
+
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error.code).toBe("CSRF_INVALID");
+    expect(body.error.message).toContain("CSRF");
+  });
+
+  it("14. Rewards Admin role views: HOD sees totals/cohorts/evaluate, FINANCE sees only redemptions queue without evaluate button, ADMIN sees both", async () => {
+    // 1. FINANCE sees only the redemptions queue and CANNOT see evaluate button or leadership totals
+    resetMockDb("finance@learntrack.edu");
+    const { unmount: unmountFinance } = renderApp(["/rewards-admin"]);
+
+    expect(
+      await screen.findByRole("heading", { name: /Rewards Administration & Oversight/i })
+    ).toBeInTheDocument();
+
+    // Redemptions queue is visible
+    expect(await screen.findByText(/Redemptions Management Queue/i)).toBeInTheDocument();
+
+    // Evaluate button is hidden from FINANCE
+    expect(screen.queryByRole("button", { name: /Run Weekly Evaluation/i })).not.toBeInTheDocument();
+
+    // Leadership totals & cohort table are hidden from FINANCE
+    expect(screen.queryByText(/Total Points Issued/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Cohort Rewards & Minimum Group Size Protection/i)).not.toBeInTheDocument();
+
+    unmountFinance();
+
+    // 2. Pure HOD sees totals, cohorts, and evaluate button, but NOT redemptions queue
+    resetMockDb("hod@learntrack.edu");
+    renderApp(["/rewards-admin"]);
+
+    expect(
+      await screen.findByRole("heading", { name: /Rewards Administration & Oversight/i })
+    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Run Weekly Evaluation/i })).toBeInTheDocument();
+    expect(await screen.findByText(/Total Points Issued/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cohort Rewards & Minimum Group Size Protection/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Redemptions Management Queue/i)).not.toBeInTheDocument();
+  });
+
+  it("15. GET /api/rewards/redemptions returns only display fields and contains no ledger or attendance data", async () => {
+    resetMockDb("finance@learntrack.edu");
+
+    const res = await fetch("/api/rewards/redemptions", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json.items)).toBe(true);
+    expect(json.items.length).toBeGreaterThan(0);
+
+    const first = json.items[0];
+    // Contains only: id, studentDisplayName, itemName, cost, status, createdAt
+    expect(first).toHaveProperty("id");
+    expect(first).toHaveProperty("studentDisplayName");
+    expect(first).toHaveProperty("itemName");
+    expect(first).toHaveProperty("cost");
+    expect(first).toHaveProperty("status");
+    expect(first).toHaveProperty("createdAt");
+
+    // Strictly does not contain ledger, attendance, observations, risk, or raw studentId
+    expect(first).not.toHaveProperty("ledger");
+    expect(first).not.toHaveProperty("attendance");
+    expect(first).not.toHaveProperty("observations");
+    expect(first).not.toHaveProperty("risk");
+    expect(first).not.toHaveProperty("studentId");
+  });
 });
 
