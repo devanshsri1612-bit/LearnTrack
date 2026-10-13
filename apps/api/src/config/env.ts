@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
@@ -9,11 +8,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-=======
-import "dotenv/config";
-import { z } from "zod";
-
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 const isTestEnv =
   process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
 
@@ -32,7 +26,6 @@ const EnvSchema = z.object({
   ML_MODE: z.enum(["MOCK", "LIVE"]).default("MOCK"),
   ML_SERVICE_URL: z.string().url().default("http://127.0.0.1:8000"),
   ML_TIMEOUT_MS: z.coerce.number().int().positive().default(4000),
-<<<<<<< HEAD
   GOOGLE_INTEGRATION_MODE: z
     .enum(["LIVE", "MOCK", "DISABLED"])
     .default("MOCK"),
@@ -44,8 +37,6 @@ const EnvSchema = z.object({
     .default("http://localhost:4000/api/integrations/google/callback"),
   GOOGLE_REFRESH_TOKEN: z.string().trim().optional(),
   GOOGLE_SENDER_EMAIL: z.string().trim().optional(),
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 });
 
 const rawEnv = {
@@ -55,14 +46,11 @@ const rawEnv = {
     isTestEnv && process.env.ML_TEST_LIVE !== "true"
       ? "MOCK"
       : process.env.ML_MODE,
-<<<<<<< HEAD
   GOOGLE_INTEGRATION_MODE:
     isTestEnv && process.env.GOOGLE_TEST_LIVE !== "true"
       ? "MOCK"
       : process.env.GOOGLE_INTEGRATION_MODE ||
         (process.env.GOOGLE_CLIENT_ID ? "LIVE" : "MOCK"),
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 };
 
 const parsed = EnvSchema.safeParse(rawEnv);

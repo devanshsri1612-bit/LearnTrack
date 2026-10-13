@@ -1,7 +1,6 @@
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from app.schemas import PredictionRequest, PredictionResponse
-<<<<<<< HEAD
 from contextlib import asynccontextmanager
 from app.predictor import Predictor
 from app.bhashini_ocr import ocr_router, get_ocr_settings
@@ -11,22 +10,11 @@ predictor = None
 
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
-=======
-from app.predictor import Predictor
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-app = FastAPI(title="Student Success ML Service", version="1.0.0")
-predictor = None
-
-@app.on_event("startup")
-def load_model():
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     global predictor
     try:
         predictor = Predictor(BASE_DIR / "artifacts").load()
     except FileNotFoundError:
         predictor = None
-<<<<<<< HEAD
     yield
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,14 +59,6 @@ def health():
             "maxUploadMb": ocr_settings["max_upload_mb"]
         }
     }
-=======
-
-@app.get("/health")
-def health():
-    return {"status":"ok" if predictor is not None else "degraded",
-            "modelLoaded":predictor is not None,
-            "modelVersion":predictor.metadata.get("model_version") if predictor else None}
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
@@ -104,7 +84,6 @@ def predict(request: PredictionRequest):
         raise HTTPException(status_code=422, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Prediction failed. Check service logs; input records were not returned.")
-<<<<<<< HEAD
 
 
 # Document Persistence, Analytics, and Prediction Bridge
@@ -249,5 +228,3 @@ def check_and_predict_from_document(doc_id: str, asOf: str = None):
             "reason": f"Prediction error: {str(e)}",
             "prediction": None
         }
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea

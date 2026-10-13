@@ -61,6 +61,8 @@ model Student {
   checkIns         StudentCheckIn[]
   consents         ConsentRecord[]
   tutoringSessions TutoringSession[]
+  rewardEntries    RewardLedgerEntry[]
+  redemptions      Redemption[]
 
   @@index([cohort])
 }
@@ -316,7 +318,6 @@ model SessionFeedback {
 }
 
 model Meeting {
-<<<<<<< HEAD
   id                 String    @id
   title              String
   organiserId        String
@@ -338,29 +339,12 @@ model Meeting {
   notificationError  String?
   notificationSentAt DateTime?
   createdAt          DateTime  @default(now())
-=======
-  id               String   @id
-  title            String
-  organiserId      String
-  organiserName    String
-  participantIds   String   // JSON array
-  participantNames String   // JSON array
-  startIso         String
-  endIso           String
-  timezone         String   @default("Asia/Kolkata")
-  syncStatus       String   @default("SYNCED") // PENDING | SYNCED | FAILED
-  integrationMode  String   @default("MOCK")   // MOCK | LIVE | DISABLED
-  locationOrLink   String?
-  caseId           String?
-  createdAt        DateTime @default(now())
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 
   organiser User @relation("MeetingOrganiser", fields: [organiserId], references: [id])
 
   @@index([organiserId])
 }
 
-<<<<<<< HEAD
 model GoogleOAuthToken {
   id           String    @id
   userId       String?   @unique
@@ -374,8 +358,6 @@ model GoogleOAuthToken {
   updatedAt    DateTime  @updatedAt
 }
 
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 model Notification {
   id          String   @id
   recipientId String
@@ -399,5 +381,48 @@ model PastCaseOutcome {
   createdAt        DateTime @default(now())
 
   @@index([interventionType, similarityKey])
+}
+
+model RewardLedgerEntry {
+  id           String   @id @default(cuid())
+  studentId    String
+  sourceType   String   // COMEBACK | CONSISTENCY | SUPPORT_SESSION | SUPPORT_SESSION_TUTOR
+  sourceId     String
+  points       Int
+  reason       String
+  activityWeek String?
+  createdAt    DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, sourceType, sourceId])
+  @@index([studentId])
+}
+
+model RewardItem {
+  id          String   @id
+  name        String
+  description String
+  cost        Int
+  stock       Int
+  isDraw      Boolean  @default(false)
+  simulated   Boolean  @default(true)
+
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id        String   @id @default(cuid())
+  studentId String
+  itemId    String
+  cost      Int
+  status    String   @default("PENDING") // PENDING | FULFILLED | CANCELLED
+  createdAt DateTime @default(now())
+
+  student Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  item    RewardItem @relation(fields: [itemId], references: [id])
+
+  @@index([studentId])
+  @@index([status])
 }
 

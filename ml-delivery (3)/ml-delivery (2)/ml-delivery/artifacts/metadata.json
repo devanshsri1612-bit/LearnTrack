@@ -21,17 +21,10 @@
   "training_students": 1050,
   "validation_students": 225,
   "test_students": 225,
-<<<<<<< HEAD
   "python_version": "3.14.2",
   "pandas_version": "3.0.5",
   "numpy_version": "2.4.3",
   "scikit_learn_version": "1.9.1",
-=======
-  "python_version": "3.13.16",
-  "pandas_version": "2.2.3",
-  "numpy_version": "2.1.3",
-  "scikit_learn_version": "1.6.1",
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
   "limitations": [
     "Trained and evaluated only on fictional synthetic data.",
     "Model scores are not validated real-world probabilities.",
