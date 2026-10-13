@@ -23,15 +23,17 @@ import { MySupportPage } from "./pages/MySupportPage";
 import { CheckInPage } from "./pages/CheckInPage";
 import { ConsentPage } from "./pages/ConsentPage";
 import { TutorWorkspacePage } from "./pages/TutorWorkspacePage";
-<<<<<<< HEAD
 import { DocumentOCRPage } from "./pages/DocumentOCRPage";
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
+import { MyRewardsPage } from "./pages/MyRewardsPage";
+import { RewardsAdminPage } from "./pages/RewardsAdminPage";
 
 const HomeRedirect: React.FC = () => {
   const { user, activeRole } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   const role = activeRole ?? user.roles[0];
+  if (role === "FINANCE") {
+    return <Navigate to="/rewards-admin" replace />;
+  }
   if (role && STAFF_ROLES.includes(role)) {
     return <Navigate to="/queue" replace />;
   }
@@ -120,7 +122,6 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
-<<<<<<< HEAD
           <Route
             path="/documents-ocr"
             element={
@@ -129,8 +130,14 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
+          <Route
+            path="/rewards-admin"
+            element={
+              <ProtectedRoute allowedRoles={["HOD", "ADMIN", "FINANCE"]}>
+                <RewardsAdminPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Student & Peer Tutor routes */}
           <Route
@@ -138,6 +145,14 @@ export const AppRoutes: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={["STUDENT", "PEER_TUTOR"]}>
                 <MySupportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-rewards"
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT", "PEER_TUTOR"]}>
+                <MyRewardsPage />
               </ProtectedRoute>
             }
           />

@@ -156,3 +156,18 @@ export function requireRoles(allowed: Role[]) {
   };
 }
 
+export function requireCsrf(req: Request, res: Response, next: NextFunction) {
+  const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
+  const headerToken = (req.headers["x-csrf-token"] || req.headers["x-xsrf-token"]) as string | undefined;
+  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    res.status(403).json({
+      error: {
+        code: "CSRF_INVALID",
+        message: "Invalid or missing CSRF token. Please provide matching X-CSRF-Token header.",
+      },
+    });
+    return;
+  }
+  next();
+}
+

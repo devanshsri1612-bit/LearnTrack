@@ -17,6 +17,9 @@ import {
   NotificationItem,
   CheckInRecord,
   ConsentGrant,
+  RewardItem,
+  RewardLedgerEntry,
+  Redemption,
 } from "@learntrack/contracts";
 import seedData from "@fixtures/seed-data.json";
 import c104Fixture from "@fixtures/C-104.json";
@@ -71,6 +74,14 @@ export const DEMO_USERS: Record<string, User & { email: string }> = {
     tutorId: "T-201",
     synthetic: true,
   },
+  "kabir@learntrack.edu": {
+    id: "USER-S-108",
+    name: "Kabir Sen",
+    email: "kabir@learntrack.edu",
+    roles: ["STUDENT"],
+    studentId: "S-108",
+    synthetic: true,
+  },
 };
 
 interface MockDbState {
@@ -89,6 +100,9 @@ interface MockDbState {
   notifications: NotificationItem[];
   checkIns: Record<string, CheckInRecord>;
   consents: ConsentGrant[];
+  rewardItems: RewardItem[];
+  rewardLedger: Record<string, RewardLedgerEntry[]>;
+  redemptions: Redemption[];
 }
 
 function buildInitialState(): MockDbState {
@@ -813,6 +827,129 @@ function buildInitialState(): MockDbState {
         recipientRole: "PEER_TUTOR",
         granted: true,
         updatedAt: "2026-09-06T09:00:00.000Z",
+      },
+    ],
+    rewardItems: [
+      {
+        id: "REW-PRINT",
+        name: "Print Credits (50 Pages)",
+        description: "Campus library printing allowance for coursework and lab submissions.",
+        cost: 20,
+        stock: 100,
+        isDraw: false,
+        simulated: true,
+      },
+      {
+        id: "REW-CANTEEN",
+        name: "Campus Canteen Meal Coupon",
+        description: "Subsidized healthy meal voucher for the student cafeteria.",
+        cost: 40,
+        stock: 50,
+        isDraw: false,
+        simulated: true,
+      },
+      {
+        id: "REW-INTERVIEW",
+        name: "Mock Technical Interview Session",
+        description: "1-on-1 mock interview with senior faculty or industry alumni.",
+        cost: 60,
+        stock: 15,
+        isDraw: false,
+        simulated: true,
+      },
+      {
+        id: "REW-RESUME",
+        name: "Career Center Resume Review",
+        description: "Comprehensive portfolio and CV feedback from placement mentors.",
+        cost: 50,
+        stock: 20,
+        isDraw: false,
+        simulated: true,
+      },
+      {
+        id: "REW-LABPASS",
+        name: "Extended Lab & Library Pass",
+        description: "Extended evening and weekend workstation access for personal projects.",
+        cost: 30,
+        stock: 40,
+        isDraw: false,
+        simulated: true,
+      },
+      {
+        id: "REW-DRAW-AI",
+        name: "Lucky Draw: 1-Month AI Learning Tool Access (SIMULATED)",
+        description: "Single draw entry for a one-month subscription to curated AI learning assistants (SIMULATED).",
+        cost: 15,
+        stock: 500,
+        isDraw: true,
+        simulated: true,
+      },
+    ],
+    rewardLedger: {
+      "S-104": [
+        {
+          id: "RLE-104-1",
+          studentId: "S-104",
+          sourceType: "CONSISTENCY",
+          sourceId: "Wk 1",
+          points: 20,
+          reason: "Weekly attendance consistency (>= 90%) in Wk 1",
+          createdAt: "2026-08-10T00:00:00.000Z",
+          activityWeek: "2026-08-10",
+        },
+      ],
+      "S-105": [
+        {
+          id: "RLE-105-1",
+          studentId: "S-105",
+          sourceType: "CONSISTENCY",
+          sourceId: "Wk 1",
+          points: 20,
+          reason: "Weekly attendance consistency (>= 90%) in Wk 1",
+          createdAt: "2026-08-10T00:00:00.000Z",
+          activityWeek: "2026-08-10",
+        },
+        {
+          id: "RLE-105-2",
+          studentId: "S-105",
+          sourceType: "CONSISTENCY",
+          sourceId: "Wk 3",
+          points: 20,
+          reason: "Weekly attendance consistency (>= 90%) in Wk 3",
+          createdAt: "2026-08-24T00:00:00.000Z",
+          activityWeek: "2026-08-24",
+        },
+      ],
+      "S-108": [
+        {
+          id: "RLE-108-1",
+          studentId: "S-108",
+          sourceType: "COMEBACK",
+          sourceId: "Wk 6",
+          points: 30,
+          reason: "Significant attendance recovery (+20% over prior 3-week baseline)",
+          createdAt: "2026-09-07T00:00:00.000Z",
+          activityWeek: "2026-09-07",
+        },
+      ],
+    },
+    redemptions: [
+      {
+        id: "RED-MOCK-1",
+        studentId: "S-105",
+        itemId: "REW-PRINT",
+        cost: 20,
+        status: "PENDING",
+        createdAt: "2026-10-12T10:00:00.000Z",
+        item: {
+          id: "REW-PRINT",
+          name: "Print Credits (50 Pages)",
+          description: "Campus library printing allowance for coursework and lab submissions.",
+          cost: 20,
+          stock: 99,
+          isDraw: false,
+          simulated: true,
+        },
       },
     ],
   };
@@ -1741,11 +1878,8 @@ export const handlers = [
       integrationMode: db.googleStatus.mode,
       locationOrLink: "Advising Office / Calendar Invite",
       caseId: body.caseId ?? null,
-<<<<<<< HEAD
       googleEventId: `mock-gcal-${Date.now()}`,
       notificationStatus: "SENT",
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     };
     db.meetings.unshift(created);
     return HttpResponse.json(created, { status: 201 });
@@ -1762,7 +1896,6 @@ export const handlers = [
         { status: 404 }
       );
     }
-<<<<<<< HEAD
     const body = (await request.json()) as {
       startIso?: string;
       endIso?: string;
@@ -1773,12 +1906,6 @@ export const handlers = [
     if (body.endIso) mtg.endIso = body.endIso;
     if (body.resync) mtg.syncStatus = "SYNCED";
     if (body.resendNotification) mtg.notificationStatus = "SENT";
-=======
-    const body = (await request.json()) as { startIso?: string; endIso?: string; resync?: boolean };
-    if (body.startIso) mtg.startIso = body.startIso;
-    if (body.endIso) mtg.endIso = body.endIso;
-    if (body.resync) mtg.syncStatus = "SYNCED";
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     return HttpResponse.json(mtg);
   }),
 
@@ -2216,6 +2343,349 @@ export const handlers = [
       grants: db.consents,
       synthetic: true,
     });
+  }),
+
+
+  // Rewards & LearnCoins
+  http.get("/api/rewards/me", () => {
+    const unauth = requireAuth();
+    if (unauth) return unauth;
+    if (!hasAnyRole(db.currentUser!, ["STUDENT", "PEER_TUTOR"])) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Only students or peer tutors can access their own rewards.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    const studentId = db.currentUser?.studentId ?? "S-104";
+    const ledger = db.rewardLedger[studentId] ?? [];
+    const totalPoints = ledger.reduce((sum, e) => sum + e.points, 0);
+    const activeRedemptions = db.redemptions.filter(
+      (r) => r.studentId === studentId && r.status !== "CANCELLED"
+    );
+    const spentPoints = activeRedemptions.reduce((sum, r) => sum + r.cost, 0);
+    const balance = Math.max(0, totalPoints - spentPoints);
+    const enteredSet = new Set(activeRedemptions.map((r) => r.itemId));
+
+    const catalog = db.rewardItems.map((item) => ({
+      ...item,
+      entered: item.isDraw ? enteredSet.has(item.id) : undefined,
+    }));
+
+    const unaffordable = db.rewardItems.filter((i) => i.cost > balance);
+    let nextRewardName: string | null = null;
+    let nextRewardCost: number | null = null;
+    let pointsNeeded = 0;
+    let percent = 100;
+    if (unaffordable.length > 0) {
+      const target = unaffordable[0];
+      nextRewardName = target.name;
+      nextRewardCost = target.cost;
+      pointsNeeded = target.cost - balance;
+      percent = Math.min(
+        100,
+        Math.max(0, Math.round((balance / target.cost) * 100))
+      );
+    }
+
+    return HttpResponse.json({
+      studentId,
+      balance,
+      ledger,
+      catalog,
+      progress: { nextRewardName, nextRewardCost, pointsNeeded, percent },
+      synthetic: true,
+    });
+  }),
+
+  http.post("/api/rewards/redeem", async ({ request }) => {
+    const unauth = requireAuth();
+    if (unauth) return unauth;
+    const csrf = request.headers.get("x-csrf-token");
+    if (!csrf) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "CSRF_INVALID",
+            message: "Missing or invalid CSRF token.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    if (!hasAnyRole(db.currentUser!, ["STUDENT", "PEER_TUTOR"])) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Staff cannot redeem catalog rewards.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    const body = (await request.json()) as { itemId: string };
+    const item = db.rewardItems.find((i) => i.id === body.itemId);
+    if (!item) {
+      return HttpResponse.json(
+        { error: { code: "NOT_FOUND", message: "Reward item not found." } },
+        { status: 404 }
+      );
+    }
+    if (item.stock <= 0) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "OUT_OF_STOCK",
+            message: "Reward item is out of stock.",
+          },
+        },
+        { status: 400 }
+      );
+    }
+    const studentId = db.currentUser?.studentId ?? "S-104";
+    if (item.isDraw) {
+      const alreadyEntered = db.redemptions.some(
+        (r) =>
+          r.studentId === studentId &&
+          r.itemId === item.id &&
+          r.status !== "CANCELLED"
+      );
+      if (alreadyEntered) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "DRAW_ENTRY_LIMIT",
+              message: "You have already entered this lucky draw.",
+            },
+          },
+          { status: 400 }
+        );
+      }
+    }
+    const ledger = db.rewardLedger[studentId] ?? [];
+    const totalPoints = ledger.reduce((sum, e) => sum + e.points, 0);
+    const activeRedemptions = db.redemptions.filter(
+      (r) => r.studentId === studentId && r.status !== "CANCELLED"
+    );
+    const spentPoints = activeRedemptions.reduce((sum, r) => sum + r.cost, 0);
+    const balance = totalPoints - spentPoints;
+    if (balance < item.cost) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "INSUFFICIENT_BALANCE",
+            message: "Insufficient LearnCoins balance.",
+          },
+        },
+        { status: 400 }
+      );
+    }
+    item.stock -= 1;
+    const redemption: Redemption = {
+      id: `RED-${Date.now()}`,
+      studentId,
+      itemId: item.id,
+      cost: item.cost,
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
+      item,
+    };
+    db.redemptions = [redemption, ...db.redemptions];
+    return HttpResponse.json(redemption, { status: 201 });
+  }),
+
+  http.get("/api/rewards/summary", () => {
+    const unauth = requireAuth();
+    if (unauth) return unauth;
+    if (!hasAnyRole(db.currentUser!, ["HOD", "ADMIN"])) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Only leadership roles can view rewards summary.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    let totalPointsIssued = 0;
+    for (const entries of Object.values(db.rewardLedger)) {
+      totalPointsIssued += entries.reduce((s, e) => s + e.points, 0);
+    }
+    const activeRedemptions = db.redemptions.filter(
+      (r) => r.status !== "CANCELLED"
+    );
+    const totalPointsRedeemed = activeRedemptions.reduce(
+      (s, r) => s + r.cost,
+      0
+    );
+    const totalRedemptions = db.redemptions.length;
+    const fulfilledRedemptions = db.redemptions.filter(
+      (r) => r.status === "FULFILLED"
+    ).length;
+
+    return HttpResponse.json({
+      totalPointsIssued,
+      totalPointsRedeemed,
+      totalRedemptions,
+      fulfilledRedemptions,
+      cohorts: [
+        {
+          cohort: "CS-2024-A",
+          studentCount: 3,
+          pointsIssued: null,
+          redemptionsCount: null,
+          insufficientData: true,
+          note: "Cohort size is below privacy threshold (n < 30); aggregate reward metrics are suppressed to protect student privacy.",
+        },
+        {
+          cohort: "ECE-2024-B",
+          studentCount: 1,
+          pointsIssued: null,
+          redemptionsCount: null,
+          insufficientData: true,
+          note: "Cohort size is below privacy threshold (n < 30); aggregate reward metrics are suppressed to protect student privacy.",
+        },
+        {
+          cohort: "ME-2025-A",
+          studentCount: 1,
+          pointsIssued: null,
+          redemptionsCount: null,
+          insufficientData: true,
+          note: "Cohort size is below privacy threshold (n < 30); aggregate reward metrics are suppressed to protect student privacy.",
+        },
+      ],
+      synthetic: true,
+    });
+  }),
+
+  http.post("/api/rewards/evaluate", ({ request }) => {
+    const unauth = requireAuth();
+    if (unauth) return unauth;
+    const csrf = request.headers.get("x-csrf-token");
+    if (!csrf) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "CSRF_INVALID",
+            message: "Missing or invalid CSRF token.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    if (!hasAnyRole(db.currentUser!, ["HOD", "ADMIN"])) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Only leadership roles can evaluate rewards.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    return HttpResponse.json({
+      evaluatedStudents: 4,
+      newEntriesCount: 0,
+      synthetic: true,
+    });
+  }),
+
+  http.get("/api/rewards/redemptions", () => {
+    const unauth = requireAuth();
+    if (unauth) return unauth;
+    if (!hasAnyRole(db.currentUser!, ["FINANCE", "ADMIN"])) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Only finance or admin roles can view redemptions list.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    const studentNames: Record<string, string> = {
+      "S-104": "Aarav Sharma",
+      "S-105": "Divya Subramanian",
+      "S-108": "Kabir Sen",
+    };
+    return HttpResponse.json({
+      items: db.redemptions.map((r) => {
+        const item = db.rewardItems.find((i) => i.id === r.itemId);
+        return {
+          id: r.id,
+          studentDisplayName: studentNames[r.studentId] ?? "Student",
+          itemName: item?.name ?? r.itemId,
+          cost: r.cost,
+          status: r.status,
+          createdAt: r.createdAt,
+        };
+      }),
+      synthetic: true,
+    });
+  }),
+
+  http.patch("/api/rewards/redemptions/:id", async ({ params, request }) => {
+    const unauth = requireAuth();
+    if (unauth) return unauth;
+    const csrf = request.headers.get("x-csrf-token");
+    if (!csrf) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "CSRF_INVALID",
+            message: "Missing or invalid CSRF token.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    if (!hasAnyRole(db.currentUser!, ["FINANCE", "ADMIN"])) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Only finance or admin roles can update redemptions.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+    const id = String(params.id);
+    const body = (await request.json()) as {
+      status: "FULFILLED" | "CANCELLED";
+    };
+    const r = db.redemptions.find((item) => item.id === id);
+    if (!r) {
+      return HttpResponse.json(
+        { error: { code: "NOT_FOUND", message: "Redemption not found." } },
+        { status: 404 }
+      );
+    }
+    if (r.status !== "PENDING") {
+      return HttpResponse.json(
+        {
+          error: {
+            code: "INVALID_STATUS_TRANSITION",
+            message: `Redemption is already ${r.status.toLowerCase()}.`,
+          },
+        },
+        { status: 400 }
+      );
+    }
+    r.status = body.status;
+    if (body.status === "CANCELLED") {
+      const item = db.rewardItems.find((i) => i.id === r.itemId);
+      if (item) item.stock += 1;
+    }
+    return HttpResponse.json(r);
   }),
 ];
 

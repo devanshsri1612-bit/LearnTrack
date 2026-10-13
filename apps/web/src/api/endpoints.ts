@@ -40,6 +40,13 @@ import {
   CreateCheckInRequest,
   ConsentResponseSchema,
   PatchConsentRequest,
+  RewardsMeResponseSchema,
+  RedeemRequest,
+  RedemptionSchema,
+  RedemptionsListResponseSchema,
+  RewardsSummaryResponseSchema,
+  EvaluateRewardsResponseSchema,
+  PatchRedemptionRequest,
 } from "@learntrack/contracts";
 import { apiRequest, clearCsrfTokenCache, generateIdempotencyKey } from "./client";
 
@@ -329,6 +336,42 @@ export const api = {
         method: "PATCH",
         body: payload,
         schema: ConsentResponseSchema,
+      }),
+  },
+
+  rewards: {
+    getMe: () =>
+      apiRequest("/api/rewards/me", {
+        method: "GET",
+        schema: RewardsMeResponseSchema,
+      }),
+    redeem: (payload: RedeemRequest) =>
+      apiRequest("/api/rewards/redeem", {
+        method: "POST",
+        body: payload,
+        schema: RedemptionSchema,
+      }),
+    getSummary: () =>
+      apiRequest("/api/rewards/summary", {
+        method: "GET",
+        schema: RewardsSummaryResponseSchema,
+      }),
+    evaluate: () =>
+      apiRequest("/api/rewards/evaluate", {
+        method: "POST",
+        body: {},
+        schema: EvaluateRewardsResponseSchema,
+      }),
+    listRedemptions: () =>
+      apiRequest("/api/rewards/redemptions", {
+        method: "GET",
+        schema: RedemptionsListResponseSchema,
+      }),
+    patchRedemption: (id: string, payload: PatchRedemptionRequest) =>
+      apiRequest(`/api/rewards/redemptions/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: payload,
+        schema: RedemptionSchema,
       }),
   },
 };

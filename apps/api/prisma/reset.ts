@@ -17,9 +17,19 @@ async function runReset() {
   console.log(
     JSON.stringify({
       level: "info",
-      msg: "Pushing Prisma schema and resetting local SQLite database...",
+      msg: "Backing up dev.db and pushing Prisma schema...",
     })
   );
+
+  const fs = await import("fs");
+  const path = await import("path");
+  const { fileURLToPath } = await import("url");
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const dbPath = path.resolve(__dirname, "dev.db");
+  const bakPath = path.resolve(__dirname, "dev.db.bak");
+  if (fs.existsSync(dbPath)) {
+    fs.copyFileSync(dbPath, bakPath);
+  }
 
   execSync("npx prisma db push --force-reset --skip-generate", {
     stdio: "inherit",

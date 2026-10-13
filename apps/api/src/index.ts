@@ -11,15 +11,11 @@ const server = app.listen(env.PORT, () => {
       msg: `LearnTrack API server listening on http://localhost:${env.PORT}`,
       env: env.NODE_ENV,
       mlMode: env.ML_MODE,
-<<<<<<< HEAD
       googleMode: env.GOOGLE_INTEGRATION_MODE,
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
     })
   );
 });
 
-<<<<<<< HEAD
 server.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code === "EADDRINUSE") {
     console.error(
@@ -35,8 +31,6 @@ server.on("error", (err: NodeJS.ErrnoException) => {
   }
 });
 
-=======
->>>>>>> 478a80caf06bf48bfa4387ebbf864fe02a764bea
 async function shutdown(signal: string) {
   console.log(
     JSON.stringify({
