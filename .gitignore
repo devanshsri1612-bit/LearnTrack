@@ -9,3 +9,4 @@ cookies.txt
 *.bak
 *.bak
 apps/api/prisma/dev.db
+*.bak

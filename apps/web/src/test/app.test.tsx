@@ -486,7 +486,7 @@ describe("LearnTrack Frontend End-to-End Spec Verification", () => {
   it("14. Rewards Admin role views: HOD sees totals/cohorts/evaluate, FINANCE sees only redemptions queue without evaluate button, ADMIN sees both", async () => {
     // 1. FINANCE sees only the redemptions queue and CANNOT see evaluate button or leadership totals
     resetMockDb("finance@learntrack.edu");
-    renderApp(["/rewards-admin"]);
+    const { unmount: unmountFinance } = renderApp(["/rewards-admin"]);
 
     expect(
       await screen.findByRole("heading", { name: /Rewards Administration & Oversight/i })
@@ -501,6 +501,8 @@ describe("LearnTrack Frontend End-to-End Spec Verification", () => {
     // Leadership totals & cohort table are hidden from FINANCE
     expect(screen.queryByText(/Total Points Issued/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Cohort Rewards & Minimum Group Size Protection/i)).not.toBeInTheDocument();
+
+    unmountFinance();
 
     // 2. Pure HOD sees totals, cohorts, and evaluate button, but NOT redemptions queue
     resetMockDb("hod@learntrack.edu");
